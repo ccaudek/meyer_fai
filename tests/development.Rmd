@@ -1,0 +1,431 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library("tidyverse")
+library("TAM")
+library("psych")
+library("lordif")
+library("cowplot")
+library("ggridges")
+library("gridExtra")
+library("ggpubr")
+library("extrafont")
+library("paletteer")
+library("readxl")
+library("mice")
+library("VIM")
+library("paran")
+library("lavaan")
+library("polycor") # for hetcor()
+library("multilevel")
+library("here")
+
+options(max.print=1000000)
+```
+
+
+Read data
+
+```{r}
+fai_s <- read_xlsx(here("data", "raw", "FAI_TOT_2020.xlsx"), col_names = TRUE)
+```
+
+```{r}
+items <- fai_s[, 51:247]
+hist(rowSums(items, na.rm = TRUE))
+```
+
+Name items.
+```{r}
+item_names <- paste("i", 1:ncol(items), sep="")
+colnames(items) <- item_names
+```
+
+
+Multiple imputation.
+```{r}
+imputed_data <- mice(
+  items, 
+  m = 1, 
+  maxit = 1, 
+  method = 'pmm', 
+  seed = 123
+)
+
+complete_data <- complete(imputed_data, 1)
+dim(complete_data)
+```
+
+
+# Autostima
+
+```{r}
+autostima <- c("i177", "i191", "i122", "i62", "i104", "i42", "i111")
+new_data <- complete_data[, (names(complete_data) %in% autostima)]
+```
+
+
+```{r}
+mod <- mirt(data=new_data, 1, itemtype="graded", SE=TRUE, verbose=FALSE)
+
+n_item <- length(names(new_data))
+plot(mod, type = 'trace', which.items = 1:n_item, 
+     main = "", par.settings = simpleTheme(lty=1:4,lwd=2),
+     auto.key=list(points=FALSE,lines=TRUE, columns=4)) 
+```
+
+
+```{r}
+plot(mod, type = 'infotrace', which.items = 1:n_item, 
+     main = "", par.settings = simpleTheme(lwd=2))
+```
+
+```{r}
+good_items <- c("i191", "i111", "i62", "i177")
+good_data <- new_data[, names(new_data) %in% good_items]
+```
+
+
+```{r}
+# model definition
+onef_model <-  '
+  F1 =~ i191 + i111 + i62 + i177
+'
+
+fit <- lavaan:::cfa(
+  onef_model, 
+  data = good_data,  
+  ordered = names(good_data),
+  std.lv = TRUE
+)
+
+# summary(fit, fit.measures = TRUE, standardized = TRUE, rsquare = TRUE)
+fitMeasures(
+  fit, 
+  c("chisq", "df", "cfi", "cfi.scaled", "tli", "tli.scaled",
+         "rmsea", "rmsea.scaled", "srmr")
+)
+```
+
+Cronbach's alpha
+```{r}
+psych::alpha(good_data)
+```
+
+
+```{r}
+# parallel analysis
+spar <- fa.parallel(
+  good_data, fm="ml", fa="fa", sim=FALSE,
+  error.bars=TRUE, se.bars=FALSE, n.iter=100
+)
+```
+
+```{r}
+eigen(cov(good_data))$values[1] / eigen(cov(good_data))$values[2]
+```
+
+```{r}
+# Velicer's MAP
+vss(good_data, fm="ml", n=3)
+```
+
+# TAM IRT Models
+
+```{r}
+# item_sc <- scale(good_data)
+
+# Rasch model
+rref <- TAM::tam.mml(
+  good_data, irtmodel = "PCM", 
+  control = list(Msteps=10, QMC=FALSE, snodes=0, convD=.0001, 
+                 conv=.00001, convM=.00001)
+)
+
+
+# 2PL IRT Generalized Partial Credit Model
+ref2pl <- TAM::tam.mml.2pl(
+  good_data, irtmodel = "GPCM", 
+  control = list(Msteps=10, QMC=FALSE, snodes=0,
+                 convD=.0001, conv=.00001, convM=.00001)
+  )
+```
+
+```{r}
+summary(ref2pl)
+```
+
+
+```{r}
+# Information Criteria to evaluate model fit
+anova(rref, ref2pl)
+rref$ic
+ref2pl$ic
+```
+
+
+```{r}
+subscale_res <- TAM::tam.modelfit(rref)
+subscale_res$Q3_summary
+```
+
+```{r}
+subscale_res$Q3.matr
+```
+
+Local dependence was quantified using the adjusted Q3 (aQ3; Marais, 2013) statistic, a bias-corrected form of the traditional Q3 statistic (Yen, 1984). A cut-off of |.25| was used to flag the most notably dependent item pairs (Christensen et al., 2017).
+
+```{r}
+subscale_res$aQ3.matr
+```
+
+```{r}
+psych::describe(good_data)
+```
+
+```{r}
+ref.dif<-lordif(good_data, group=x, model = "GPCM",  
+                # a generalized partial credit model
+               criterion = "R2", pseudo.R2 = "McFadden", # this is the criterion
+               R2.change =.01, # this is the % R2 to use as a flagging threshold
+               maxIter = 500, minCell = 20)
+```
+
+
+
+
+
+
+
+```{r}
+mod <- mirt(data=good_data, 1, itemtype="graded", SE=TRUE, verbose=FALSE)
+```
+
+```{r}
+Theta <- mirt::fscores(mod)
+residuals(mod, type = 'Q3', Theta=Theta)
+```
+
+
+# Fratelli
+
+```{r}
+brothers <- complete_data[1:324, ]
+```
+
+```{r}
+item_brothers <- c("i188", "i17", "i184", "i147", "i109", "i37", 
+               "i171", "i78", "i126", "i84", "i55", "i110", "i123", 
+               "i150", "i158")
+new_data <- brothers[, (names(brothers) %in% item_brothers)]
+```
+
+
+```{r}
+n_item <- length(names(new_data))
+mod <- mirt(data=new_data, 1, itemtype="graded", SE=TRUE, verbose=FALSE)
+
+n_item <- length(names(new_data))
+plot(mod, type = 'trace', which.items = 1:n_item, 
+     main = "", par.settings = simpleTheme(lty=1:4,lwd=2),
+     auto.key=list(points=FALSE,lines=TRUE, columns=4)) 
+```
+
+
+```{r}
+plot(mod, type = 'infotrace', which.items = 1:n_item, 
+     main = "", par.settings = simpleTheme(lwd=2))
+```
+
+
+```{r}
+good_items <- c("i171", "i126", "i17", "i147", "i110")
+good_data <- new_data[, names(new_data) %in% good_items]
+```
+
+
+```{r}
+# model definition
+onef_model <-  '
+  F1 =~ i171 + i126 + i17 + i147 + i110
+'
+
+fit <- lavaan:::cfa(
+  onef_model, 
+  data = good_data,  
+  ordered = names(good_data),
+  std.lv = TRUE
+)
+
+# summary(fit, fit.measures = TRUE, standardized = TRUE, rsquare = TRUE)
+fitMeasures(
+  fit, 
+  c("chisq", "df", "cfi", "cfi.scaled", "tli", "tli.scaled",
+         "rmsea", "rmsea.scaled", "srmr")
+)
+```
+
+# TAM IRT Models
+
+```{r}
+# item_sc <- scale(good_data)
+
+# Rasch model
+rref <- TAM::tam.mml(
+  good_data, irtmodel = "PCM", 
+  control = list(Msteps=10, QMC=FALSE, snodes=0, convD=.0001, 
+                 conv=.00001, convM=.00001)
+)
+
+# 2PL IRT Generalized Partial Credit Model
+ref2pl <- TAM::tam.mml.2pl(
+  good_data, irtmodel = "GPCM", 
+  control = list(Msteps=10, QMC=FALSE, snodes=0,
+                 convD=.0001, conv=.00001, convM=.00001)
+  )
+```
+
+```{r}
+summary(ref2pl)
+```
+
+
+```{r}
+# Information Criteria to evaluate model fit
+anova(rref, ref2pl)
+rref$ic
+ref2pl$ic
+```
+
+
+```{r}
+subscale_res <- TAM::tam.modelfit(rref)
+subscale_res$Q3_summary
+```
+
+```{r}
+subscale_res$Q3.matr
+```
+
+Local dependence was quantified using the adjusted Q3 (aQ3; Marais, 2013) statistic, a bias-corrected form of the traditional Q3 statistic (Yen, 1984). A cut-off of |.25| was used to flag the most notably dependent item pairs (Christensen et al., 2017).
+
+```{r}
+subscale_res$aQ3.matr
+```
+
+```{r}
+psych::describe(good_data)
+```
+
+
+# Iperprotezione
+
+
+```{r}
+item_hyperprot <- c("i9", "i153", "i2", "i137", "i96", "i165", 
+               "i194", "i13", "i14", "i101", "i144", "i31", "i151", 
+               "i159", "i182", "i27")
+new_data <- complete_data[, (names(complete_data) %in% item_hyperprot)]
+```
+
+
+```{r}
+n_item <- length(names(new_data))
+mod <- mirt(data=new_data, 1, itemtype="graded", SE=TRUE, verbose=FALSE)
+
+n_item <- length(names(new_data))
+plot(mod, type = 'trace', which.items = 1:n_item, 
+     main = "", par.settings = simpleTheme(lty=1:4,lwd=2),
+     auto.key=list(points=FALSE,lines=TRUE, columns=4)) 
+```
+
+
+```{r}
+plot(mod, type = 'infotrace', which.items = 1:n_item, 
+     main = "", par.settings = simpleTheme(lwd=2))
+```
+
+
+```{r}
+good_items <- c("i159", "i96", "i137", "i101", "i31")
+good_data <- new_data[, names(new_data) %in% good_items]
+```
+
+
+```{r}
+# model definition
+onef_model <-  '
+  F1 =~ i159 + i96 + i137 + i101 + i31
+'
+
+fit <- lavaan:::cfa(
+  onef_model, 
+  data = good_data,  
+  ordered = names(good_data),
+  std.lv = TRUE
+)
+
+# summary(fit, fit.measures = TRUE, standardized = TRUE, rsquare = TRUE)
+fitMeasures(
+  fit, 
+  c("chisq", "df", "cfi", "cfi.scaled", "tli", "tli.scaled",
+         "rmsea", "rmsea.scaled", "srmr")
+)
+```
+
+# TAM IRT Models
+
+```{r}
+# item_sc <- scale(good_data)
+
+# Rasch model
+rref <- TAM::tam.mml(
+  good_data, irtmodel = "PCM", 
+  control = list(Msteps=10, QMC=FALSE, snodes=0, convD=.0001, 
+                 conv=.00001, convM=.00001)
+)
+
+# 2PL IRT Generalized Partial Credit Model
+ref2pl <- TAM::tam.mml.2pl(
+  good_data, irtmodel = "GPCM", 
+  control = list(Msteps=10, QMC=FALSE, snodes=0,
+                 convD=.0001, conv=.00001, convM=.00001)
+  )
+```
+
+```{r}
+summary(ref2pl)
+```
+
+
+```{r}
+# Information Criteria to evaluate model fit
+anova(rref, ref2pl)
+rref$ic
+ref2pl$ic
+```
+
+
+```{r}
+subscale_res <- TAM::tam.modelfit(rref)
+subscale_res$Q3_summary
+```
+
+```{r}
+subscale_res$Q3.matr
+```
+
+Local dependence was quantified using the adjusted Q3 (aQ3; Marais, 2013) statistic, a bias-corrected form of the traditional Q3 statistic (Yen, 1984). A cut-off of |.25| was used to flag the most notably dependent item pairs (Christensen et al., 2017).
+
+```{r}
+subscale_res$aQ3.matr
+```
+
+```{r}
+psych::describe(good_data)
+```
+
+

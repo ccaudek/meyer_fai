@@ -1,0 +1,11 @@
+bipq1affect	bipq2long	bipq3control	bipq4treat	bipq5sympt	bipq6concern	bipq7underst	bipq8emot	mpqhowbad	SIP24
+bipq2long	 0.43***									
+bipq3control	-0.15* 	-0.18** 								
+bipq4treat	-0.15* 	-0.15* 	 0.42***							
+bipq5sympt	 0.53***	 0.29***	-0.08 	-0.03 						
+bipq6concern	 0.57***	 0.29***	-0.27***	-0.22***	 0.41***					
+bipq7underst	 0.09 	 0.06 	 0.26***	 0.30***	 0.03 	-0.08 				
+bipq8emot	 0.50***	 0.25***	-0.19** 	-0.14* 	 0.17* 	 0.60***	-0.11 			
+mpqhowbad	 0.55***	 0.30***	-0.22** 	-0.15* 	 0.45***	 0.40***	 0.12# 	 0.33***		
+SIP24	 0.64***	 0.33***	-0.14* 	-0.14* 	 0.46***	 0.35***	 0.04 	 0.35***	 0.52***	
+SIP15	 0.61***	 0.31***	-0.11 	-0.12# 	 0.44***	 0.29***	 0.05 	 0.26***	 0.50***	 0.96***

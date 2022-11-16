@@ -1,0 +1,450 @@
+---
+title: "Psychometric analyses of the FAI Scale"
+subtitle: "Step 1: Descriptive statistics"
+author: "[Corrado Caudek](https://ccaudek.github.io/)"
+date: "First version 2019-12-17. Last modified `r format(Sys.time(), '%Y-%m-%d')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_collapsed: true
+    number_sections: true
+    fig_caption: true
+    highlight: textmate
+    tables: TRUE
+---
+
+
+```{r setup, warning=FALSE, message=FALSE, echo=FALSE, results='hide'}
+library("here")
+source(here("scripts", "00_prelims.R"))
+```
+
+```{r import_data, warning=FALSE, message=FALSE, echo=FALSE, results='hide'}
+source(here("scripts", "01_read_data_and_MI.R"))
+
+mydata <- complete_data
+myitems <- colnames(mydata)
+```
+
+# Step 1: Descriptives
+
+Response frequencies and item statistics are examined to assess whether items show sufficient variation to be able to differentiate respondents on the construct(s) investigated, and if there are any out-of-range values (data entry errors). Differences in response frequencies also provide a first hint regarding variation in item intensity/difficulty (and help interpret any later differences between IRT and FA results). 
+
+Associations between items are examined to identify any negative correlations (and reverse code such items for next analyses). 
+
+Plotting of multivariate outliers helps identify any respondents with idiosyncratic response patterns, which can be further investigated and either excluded (e.g. if errors are identified in the data collection/entry) or kept within the sample (if there are no valid reasons for exclusion).
+
+
+```{r, include=FALSE, warning=FALSE, echo=FALSE, message=FALSE}
+n_subj <- nrow(mydata)
+n_items <- ncol(mydata)
+
+# run frequencies for all items
+for(n in myitems) {
+  cat("\n", n, ":")
+  x <- table(mydata[, n], exclude=NULL) / n_subj
+  print(x)
+}
+
+bad_item <- rep(NA, n_items)
+for(n in 1:n_items) {
+  x <- table(mydata[, n], exclude=NULL) / n_subj
+  bad_item[n] <- any(x > .95)
+}
+```
+
+There are in `r sum(bad_item)` items in which the 95% of responses was given to a single category of the ordinal item. The items `r (1:n_items)[bad_item]` must be excluded from further analyses. 
+
+```{r}
+mydata2 <- mydata[, -((1:n_items)[bad_item])]
+```
+
+
+```{r}
+d2mydata <- outlier(mydata2, cex=.6, bad=5)
+```
+
+```{r}
+tail(sort(d2mydata), 5)
+```
+
+Remove the 5 more extreme observations according to the Mahalanobis distance is D^2.
+
+```{r}
+mydata3 <- mydata2[-c(279, 266, 182, 256, 183), ]
+```
+
+
+# Parallel analysis
+
+```{r}
+fa.parallel(mydata)
+```
+
+```{r}
+R <- cor(mydata3)
+
+fa_out <- principal(R, nfactors = 12, n.obs = n_subj, rotate = "promax")
+# print(fa_out$loadings[, 1], cutoff = 0.4)
+```
+
+```{r}
+f1_items <- names(
+  (fa_out$loadings[, 1] )[fa_out$loadings[, 1] > 0.4]
+)
+```
+
+```{r}
+n_factors <- 12
+item_list <- list()
+
+for (i in 1:n_factors) {
+  item_list[[i]] <- names((fa_out$loadings[, i])[fa_out$loadings[, i] > 0.4])
+}
+```
+
+
+## Second factor
+
+```{r}
+im <- mydata2[, item_list[[2]]]
+```
+
+```{r}
+d2mydata <- outlier(im, cex=.6, bad=3)
+```
+
+Remove one outlier.
+```{r}
+im <- im[-256, ]
+```
+
+There were `r sum((1-pchisq(d2mydata, ncol(mydata)))<.001)` respondents with D^2^ values with probability values <.001 (considering a chi-squared distribution with df = the number of items). The maximum D^2^ value is `r round(max(d2mydata), 2)`. 
+
+
+## Interpretation
+
+- Are there any out-of-range values?
+- Are all response options well-represented in the data?
+- Are all associations between items positive?
+- Are there multivariate outliers in the data?
+
+
+# Step 2: Item properties - Mokken Scaling Analysis (MSA)
+
+Idiosyncratic response patterns are examined within MSA as number of Guttman errors and displayed graphically. Coefficients of homogeneity (H) are examined for the original item set (for each item, item pair, and the overall scale) Values >=.30 indicate scalability. 
+
+An Automated Item Selection Procedure (*aisp*) is performed at increasing threshold levels of homogeneity (c) to examine dimensionality. If all items show up as belonging to dimension number 1, this means that the scale is unidimensional at that threshold of homogeneity (indicated in column headings, from .05 to .80). The minimum threshold for homogeneity is .30. Items with a value of 0 are unscalable at that threshold. If at higher threshold levels item separate from dimension number 1 in groups (e.g. 2 or more items 'leave' dimension 1 at the same threshold) this indicates that those items may represent a separate dimension. If, on the contrary, items 'leave' the dimension one by one and become unscalable, this indicates that there is a single dimension with which items are more or less strongly associated. Unidimensional item subsets are selected based on the *aisp* algorithm (the items selected should show unidimensionality at a threshold level of .30 or higher) and theoretical considerations. 
+
+These item subsets are then tested for local independence, monotonicity, and invariant item ordering - 3 criteria for model fit in MSA. 
+
+- Local independence is reported as TRUE/FALSE values; if all values are TRUE, the items show local independence with default parameters; if any of the items show up as FALSE, more investigation is needed. 
+
+- Monotonicity is shown in table format (default minsize). The 'zsig' column shows the number of statistically-significant violations of monotonicity per item; if this number is >0 for one or more items, more investigation of monotonicity is needed (for more testing, various minsize values can be specified in separate tests). Monotonicity is also displayed visually by item step response functions (ISRF; minsize values can be modified to provide a sufficient number of rest score groups for adequate testing).
+
+- invariant item ordering test are shown first in table format (default minsize). The 'tsig' column shows the number of statistically-significant violations of IIO per item; if any of the items do not show 0 in the #tsig column, more investigation of IIO is needed  (for more testing, various minsize values can be specified in separate tests). IIO is also displayed visually by ISRF plots for each item pair (as above, minsize values can be modified to provide a sufficient number of rest score groups for adequate testing).
+
+For item sets that fit these criteria, it can be concluded that items measure the same construct and total scores can be used to locate respondents on the unidimensional continuum that represent the construct.
+
+
+```{r, fig.width=5, fig.height=5, warning=FALSE, message=FALSE, echo=FALSE, fig.cap=Fig_2.1_cap}
+# Outliers (participants)
+xPlus <- rowSums(im)
+gPlus <- check.errors(im)$Gplus
+hist(gPlus)
+oPlus <- check.errors(im, TRUE, TRUE)$Oplus
+cor(cbind(oPlus, gPlus, xPlus))
+
+Q3 <- summary(gPlus)[[5]]
+IQR <- Q3 - summary(gPlus)[[2]]
+outlier <- gPlus > Q3 + 1.5 * IQR 
+sum(outlier)
+# if needed to further analyse ouliers
+cbind(im, gPlus)[outlier, ]
+# then possible sensitivity analysis:
+# coefH(im[!outlier, ])
+
+# exclude outlying participants
+im <- im[!outlier, ]
+```
+
+There were `r sum(outlier)` cases with a number of Guttman errors higher than (Q3 plus 1.5 times IQR). 
+
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+# Compute scalability coefficients
+Hvalues <- coefH(im)
+# examine aisp for increasing c levels (run the function you defined above and give it a name)
+motable.mydata <- moscales.for.lowerbounds(im)
+# save it as a data frame
+aispmydata <- as.data.frame(motable.mydata)
+# if you need to view it
+# View(aispmydata)
+# if you need it outside the output file
+# write.table(motable.mydata, file="./aispmydata.csv", quote = FALSE, sep = "\t",row.names = FALSE)
+```
+
+```{r results = 'asis', echo=FALSE}
+knitr::kable(Hvalues$Hi)
+```
+
+
+The complete item set has a homogeneity value H(se) = `r Hvalues$H`.  
+
+```{r results = 'asis', echo=FALSE}
+knitr::kable(motable.mydata)
+```
+
+A selection of the items to investigate further (one scale or more subscales) can be performed by selecting a solution from the table above, or by selecting specific items in connection with theoretical considerations; most importantly, the items selected should show unidimensionality at a threshold level of .30 or higher. 
+
+
+Modify `threshod` to select the N best items according to Loevinger's H coefficient
+
+```{r}
+threshold <- 0.58
+foo <- Hvalues$Hi
+good_items <- row.names(foo)[as.numeric(foo[, 1]) > threshold]
+good_items
+```
+
+```{r}
+selected_items <- im[, colnames(im) %in% good_items]
+```
+
+```{r}
+# select the most appropriate solution, 
+# for example, the code below is for the solution at lowerbound .30
+myselection <- aisp(selected_items,  lowerbound = 0.58)
+myselection
+# check which items are in which subscales (here the first subscale)
+names(selected_items[, myselection==1])
+
+
+# check properties for subscales:
+# select the first subscale (if MSA confirms the initial 3-subscale structure)
+# mysubscale1 <- im[, Subscale1]
+# check H 
+HvaluesSubscale1 <- coefH(selected_items)
+```
+
+```{r results = 'asis', echo=FALSE}
+knitr::kable(HvaluesSubscale1$Hi)
+```
+
+
+Subscale 1 has a homogeneity value H(se) = `r HvaluesSubscale1$H`.  
+
+
+```{r, include=FALSE, warning=FALSE, echo=FALSE, message=FALSE}
+# check conditional association (local independence)
+CA.def.mysubscale1 <- check.ca(selected_items, TRUE)
+CA.def.mysubscale1$InScale
+CA.def.mysubscale1$Index
+CA.def.mysubscale1$Flagged
+```
+
+**Local independence** for the subscale 1 items is presented below as TRUE/FALSE values: 
+
+```{r}
+CA.def.mysubscale1$InScale[[1]]
+```
+
+```{r, warning=FALSE, echo=FALSE, message=FALSE}
+# check monotonicity at different minsize:
+# with default minsize:
+monotonicity.def.mysubscale1 <- 
+  check.monotonicity(selected_items, minvi = .03)
+```
+
+**Monotonicity** tests are shown for default minsize (alternative values of 60 and 50 are displayed below as R output). Item step response functions (minsize=50) are displayed visually
+
+```{r results = 'asis', echo=FALSE}
+knitr::kable(summary(monotonicity.def.mysubscale1))
+```
+
+```{r, warning=FALSE, echo=FALSE, message=FALSE}
+# try different minsizes 60 to 10 
+monotonicity.60.mysubscale1 <- check.monotonicity(
+  selected_items, minvi = .03, minsize = 60
+)
+summary(monotonicity.60.mysubscale1)
+plot(monotonicity.60.mysubscale1)
+```
+
+
+```{r}
+monotonicity.50.mysubscale1 <- 
+  check.monotonicity(selected_items, minvi = .03, minsize = 50)
+# summary(monotonicity.50.mysubscale1)
+plot(monotonicity.50.mysubscale1)
+```
+
+
+
+```{r, warning=FALSE, echo=FALSE, message=FALSE}
+# Investigate the assumption of non-intersecting item step response functions (ISRFs) 
+# using method MIIO (appropriate for ordinal items)
+miio.mysubscale1 <- check.iio(selected_items)
+# or using rest score (for binary items)
+# restscore.mysubscale1 <- check.restscore(mysubscale1)
+# several other options are available in mokken: pmatrix, mscpm, and IT
+```
+
+```{r results = 'asis', echo=FALSE}
+knitr::kable(summary(miio.mysubscale1)$item.summary)
+```
+
+```{r results = 'asis', echo=FALSE}
+knitr::kable(miio.mysubscale1$violations)
+```
+
+
+
+```{r}
+miio.mysubscale1$items.removed
+```
+
+
+```{r}
+bad <- names(miio.mysubscale1$items.removed)
+final_items <- selected_items[, !(names(selected_items) %in% bad)]
+```
+
+
+```{r}
+miio.mysubscale1$HT
+```
+
+```{r}
+ miio.mysubscale1$item.mean
+```
+
+FATTO FINO A QUI!!!!!!!
+
+
+```{r, include=FALSE, warning=FALSE, echo=FALSE, message=FALSE}
+sum(bad_item)
+
+# check if the variables are coded as numeric
+class(mydata[,1])
+
+#__________________#
+####   STEP 1   ####
+#__________________#
+
+# define captions
+Tab_1.1_cap <- table_nums(name="tab_1.1", caption = "Frequencies of item response options" )
+Tab_1.2_cap <- table_nums(name="tab_1.2", caption = "Descriptive statistics of all items" )
+
+Fig_1.1_cap <- figure_nums(name="fig_1.1", caption = "Barplots of high score frequencies" )
+Fig_1.2_cap <- figure_nums(name="fig_1.2", caption = "Barplots of item score distributions" )
+Fig_1.3_cap <- figure_nums(name="fig_1.3", caption = "Heatplot Spearman correlations between item scores" )
+Fig_1.4_cap <- figure_nums(name="fig_1.4", caption = "Multivariate outliers in item set" )
+```
+
+## Results
+
+The frequencies of endorsing individual response options are presented in `r t.ref("tab_1.1")`, and barplots of item score distributions are shown in `r f.ref("fig_1.1") `.
+
+A heat plot of inter-item correlations (tetrachoric) is shown in `r f.ref("fig_1.3")`.
+
+Multivariate outliers in the item set (Mahalanobis distance - D^2^ values) are displayed graphically in `r f.ref("fig_1.4")`.
+
+```{r, include=FALSE, warning=FALSE, echo=FALSE, message=FALSE}
+# frequencies table - here example for ordinal items with 7-point Likert response scales
+# build a table with item distributions
+# 1. build an empty txt file
+summaries.file <- "./summaries.txt";
+cat("Variable\tYes\t%\n", file = summaries.file, append = FALSE)
+
+# 2. write a function to include values for an item
+write.summary.var <- function(x, xname) {
+  # consider the extreme categories: 0 and 4
+  yes <- sum(x == 4, na.rm = TRUE) 
+  total <- length(x)
+
+  cat(
+    paste(xname, "\t", yes, "\t",
+      sprintf("%.2f", 100 * yes / total), "%\n",
+      sep = ""
+    ),
+    file = summaries.file, append = TRUE
+  )
+}
+
+# 3. for each item, run this function iteratively
+for (n in myitems) {
+  write.summary.var( mydata[, n], n );
+}
+
+# and read the table in R
+myitemssum = read.table(
+  file="./summaries.txt", header = TRUE, sep = "\t", quote="\"" 
+)
+
+# 4. add column names
+colnames(myitemssum) <- c("Item label","YESCount", "YESPercentage")
+
+# myitemssum <- cbind(Items, myitemssum)
+
+
+# order items based on percentage
+myitemssumOrder <- myitemssum[order(myitemssum[, 2]), ] 
+# based on the 3rd column (yes count)
+
+# if you need it outside the output file
+write.table(
+  myitemssumOrder[, -2], 
+  file="./myitemssumOrder.csv", 
+  quote = FALSE, sep = "\t", row.names = FALSE
+)
+```
+
+
+```{r , results = 'asis', echo=FALSE}
+knitr::kable(
+  myitemssumOrder[, -2], 
+  row.names=FALSE, 
+  caption = Tab_1.1_cap
+)
+```
+
+
+```{r, fig.width=8, fig.height=8, warning=FALSE, message=FALSE, echo=FALSE, fig.cap=Fig_1.1_cap}
+# plots to visualize the data 
+# barplot of endorsement frequencies (number of respondents with affirmative answers)
+# tiff( "./Figure1.tif", width=6, height=6, units="in", res=600);
+par(oma = c(0, 3, 0, 0))
+barplot(myitemssumOrder[, "YESCount"],
+  horiz = TRUE,
+  main = "Endorsement frequencies FAI items",
+  ylab = "",
+  xlab = "Number of respondents",
+  cex.lab = 0.8,
+  cex.axis = 0.8,
+  names.arg = myitemssumOrder[, "Item label"],
+  las = 2,
+  cex.names = 0.8
+)
+# dev.off()
+```
+
+
+```{r, fig.width=5, fig.height=5, warning=FALSE, message=FALSE, echo=FALSE, fig.cap=Fig_1.4_cap}
+
+# check outliers in item sets
+d2mydata <- outlier(
+  mydata, cex=.6, bad=3
+)
+# hist(d2mydata)
+# no outliers found
+# outliers are <.001 according to Tabachnick, B.G., & Fidell, L.S. (2007). Using Multivariate Statistics (5th Ed.). Boston: Pearson. (p. 74) 
+# explained here for SPSS: http://www-01.ibm.com/support/docview.wss?uid=swg21480128
+
+```
+
+There were `r sum((1-pchisq(d2mydata, ncol(mydata)))<.001)` respondents with D^2^ values with probability values <.001 (considering a chi-squared distribution with df = the number of items). The maximum D^2^ value is `r round(max(d2mydata), 2)`. 
+
+
+

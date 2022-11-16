@@ -1,0 +1,503 @@
+---
+title: "Psychometric analyses of the FAI Scale"
+subtitle: "Area 6: item selection"
+author: "[Corrado Caudek](https://ccaudek.github.io/)"
+date: "First version 2019-12-17. Last modified `r format(Sys.time(), '%Y-%m-%d')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_collapsed: true
+    number_sections: true
+    fig_caption: true
+    highlight: textmate
+    tables: TRUE
+---
+
+# Set up
+
+```{r setup, warning=FALSE, message=FALSE, echo=FALSE, results='hide'}
+library("here")
+source(here("scripts", "00_prelims.R"))
+```
+
+# Import data
+
+```{r import_data, warning=FALSE, message=FALSE, echo=FALSE, results='hide'}
+source(here("scripts", "01_read_data_and_MI.R"))
+
+mydata <- complete_data
+myitems <- colnames(mydata)
+```
+
+# Step 1: Descriptive statistics
+
+Response frequencies and item statistics are examined to assess whether items show sufficient variation to be able to differentiate respondents on the construct(s) investigated, and if there are any out-of-range values (data entry errors). Differences in response frequencies also provide a first hint regarding variation in item intensity/difficulty (and help interpret any later differences between IRT and FA results). 
+
+Associations between items are examined to identify any negative correlations (and reverse code such items for next analyses). 
+
+Plotting of multivariate outliers helps identify any respondents with idiosyncratic response patterns, which can be further investigated and either excluded (e.g. if errors are identified in the data collection/entry) or kept within the sample (if there are no valid reasons for exclusion).
+
+```{r, include=FALSE, warning=FALSE, echo=FALSE, message=FALSE}
+n_subj <- nrow(mydata)
+n_items <- ncol(mydata)
+
+# run frequencies for all items
+for(n in myitems) {
+  cat("\n", n, ":")
+  x <- table(mydata[, n], exclude=NULL) / n_subj
+  print(x)
+}
+
+bad_item <- rep(NA, n_items)
+for(n in 1:n_items) {
+  x <- table(mydata[, n], exclude=NULL) / n_subj
+  bad_item[n] <- any(x > .95)
+}
+```
+
+There are in `r sum(bad_item)` items in which the 95% of responses was given to a single category of the ordinal item. The items `r (1:n_items)[bad_item]` must be excluded from further analyses. 
+
+```{r}
+mydata2 <- mydata[, -((1:n_items)[bad_item])]
+```
+
+
+# Area 6 Hyper-protection
+
+```{r}
+# item 182 was removed in the previous step
+a6_names <- c(
+  "i9", "i153", "i2", "i137", "i96", "i165", "i194", "i13", "i14", 
+  "i101", "i144", "i31", "i151", "i159", "i27"
+)
+```
+
+```{r}
+a6 <- mydata2[, a6_names]
+```
+
+
+```{r}
+R <- cor(a6)
+round(R, 2)
+```
+
+There is a very small number of negative correlations; they are very small in magnitude.  Hopefully, they will disappear when the best items will be selected.
+
+# Check outliers (Mahalanobis $D^2$)
+
+```{r}
+d2mydata <- outlier(a6, cex=.6, bad=3)
+```
+
+Remove one outlier:
+```{r}
+a6 <- a6[-c(183), ]
+```
+
+Change name to the data.frame.
+```{r}
+# For the following analyses:
+im <- a6
+```
+
+
+There were `r sum((1 - pchisq(d2mydata, ncol(mydata))) < .001)` respondents with D^2^ values with probability values <.001 (considering a chi-squared distribution with df = the number of items). The maximum D^2^ value is `r round(max(d2mydata), 2)`. 
+
+
+## Interpretation
+
+- Are there any out-of-range values?
+- Are all response options well-represented in the data?
+- Are all associations between items positive?
+- Are there multivariate outliers in the data?
+
+
+# Step 2: Item properties - Mokken Scaling Analysis (MSA)
+
+Idiosyncratic response patterns are examined within MSA as number of Guttman errors and displayed graphically. Coefficients of homogeneity (H) are examined for the original item set (for each item, item pair, and the overall scale) Values >=.30 indicate scalability. 
+
+An Automated Item Selection Procedure (*aisp*) is performed at increasing threshold levels of homogeneity (c) to examine dimensionality. If all items show up as belonging to dimension number 1, this means that the scale is unidimensional at that threshold of homogeneity (indicated in column headings, from .05 to .80). The minimum threshold for homogeneity is .30. Items with a value of 0 are unscalable at that threshold. If at higher threshold levels item separate from dimension number 1 in groups (e.g. 2 or more items 'leave' dimension 1 at the same threshold) this indicates that those items may represent a separate dimension. If, on the contrary, items 'leave' the dimension one by one and become unscalable, this indicates that there is a single dimension with which items are more or less strongly associated. Unidimensional item subsets are selected based on the *aisp* algorithm (the items selected should show unidimensionality at a threshold level of .30 or higher) and theoretical considerations. 
+
+These item subsets are then tested for local independence, monotonicity, and invariant item ordering - 3 criteria for model fit in MSA. 
+
+- Local independence is reported as TRUE/FALSE values; if all values are TRUE, the items show local independence with default parameters; if any of the items show up as FALSE, more investigation is needed. 
+
+- Monotonicity is shown in table format (default minsize). The 'zsig' column shows the number of statistically-significant violations of monotonicity per item; if this number is >0 for one or more items, more investigation of monotonicity is needed (for more testing, various minsize values can be specified in separate tests). Monotonicity is also displayed visually by item step response functions (ISRF; minsize values can be modified to provide a sufficient number of rest score groups for adequate testing).
+
+- invariant item ordering test are shown first in table format (default minsize). The 'tsig' column shows the number of statistically-significant violations of IIO per item; if any of the items do not show 0 in the #tsig column, more investigation of IIO is needed  (for more testing, various minsize values can be specified in separate tests). IIO is also displayed visually by ISRF plots for each item pair (as above, minsize values can be modified to provide a sufficient number of rest score groups for adequate testing).
+
+For item sets that fit these criteria, it can be concluded that items measure the same construct and total scores can be used to locate respondents on the unidimensional continuum that represent the construct.
+
+
+## Guttman errors
+
+How many, and which respondents have idiosyncratic response patterns?
+
+```{r, fig.width=5, fig.height=5, warning=FALSE, message=FALSE, echo=FALSE, fig.cap=Fig_2.1_cap}
+# Outliers (participants)
+xPlus <- rowSums(im)
+gPlus <- check.errors(im)$Gplus
+hist(gPlus)
+oPlus <- check.errors(im, FALSE, TRUE)$Oplus
+cor(cbind(oPlus, gPlus, xPlus))
+
+Q3 <- summary(gPlus)[[5]]
+IQR <- Q3 - summary(gPlus)[[2]]
+outlier <- gPlus > Q3 + 1.5 * IQR 
+sum(outlier)
+# if needed to further analyse ouliers
+cbind(im, gPlus)[outlier, ]
+# then possible sensitivity analysis:
+# coefH(im[!outlier, ])
+
+# exclude outlying participants
+im <- im[!outlier, ]
+```
+
+There were `r sum(outlier)` cases with a number of Guttman errors higher than (Q3 plus 1.5 times IQR). 
+
+
+## Coefficients of homogeneity
+
+Do items form a single scale?
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+# Compute scalability coefficients
+Hvalues <- coefH(im)
+```
+
+```{r results = 'asis', echo=FALSE}
+knitr::kable(Hvalues$Hi)
+```
+
+
+## Automatic item selection algorithm (aisp) at increasing homogeneity levels
+
+Is the scale uni-dimensional or multi-dimensional?
+
+
+```{r}
+# examine aisp for increasing c levels (run the function you defined above and give it a name)
+motable.mydata <- moscales.for.lowerbounds(im)
+# save it as a data frame
+aispmydata <- as.data.frame(motable.mydata)
+# if you need to view it
+# View(aispmydata)
+# if you need it outside the output file
+# write.table(motable.mydata, file="./aispmydata.csv", quote = FALSE, sep = "\t",row.names = FALSE)
+```
+
+
+```{r}
+# select the most appropriate solution, 
+# for example, the code below is for the solution at lowerbound .60
+myselection <- aisp(im,  lowerbound = 0.6)
+myselection
+# check which items are in which subscales (here the first subscale)
+names_selected_items <- names(im[, myselection==1])
+names_selected_items
+
+# check properties for subscales:
+# select the first subscale (if MSA confirms the initial 3-subscale structure)
+mysubscale1 <- im %>% 
+  dplyr::select(names_selected_items)
+
+# check H 
+HvaluesSubscale1 <- coefH(mysubscale1)
+```
+
+```{r results = 'asis', echo=FALSE}
+knitr::kable(HvaluesSubscale1$Hi)
+```
+
+Subscale 1 has a homogeneity value H(se) = `r HvaluesSubscale1$H`.  
+
+
+## Conditional association (local independence test)
+
+Are items associated only via the latent dimension?
+
+```{r, include=FALSE, warning=FALSE, echo=FALSE, message=FALSE}
+# check conditional association (local independence)
+CA.def.mysubscale1 <- check.ca(mysubscale1, TRUE)
+CA.def.mysubscale1$InScale
+CA.def.mysubscale1$Index
+CA.def.mysubscale1$Flagged
+```
+
+**Local independence** for the subscale 1 items is presented below as TRUE/FALSE values: 
+
+```{r}
+CA.def.mysubscale1$InScale[[1]]
+```
+
+
+## Monotonicity per subscale
+
+Is the probability of endorsing a ‘correct’ response option increasing with increasing levels of the latent dimension?
+
+```{r, warning=FALSE, echo=FALSE, message=FALSE}
+# check monotonicity at different minsize:
+# with default minsize:
+monotonicity.def.mysubscale1 <- 
+  check.monotonicity(mysubscale1, minvi = .03)
+```
+
+**Monotonicity** tests are shown for default minsize (alternative values of 60 and 50 are displayed below as R output). Item step response functions (minsize=50) are displayed visually
+
+```{r results = 'asis', echo=FALSE}
+knitr::kable(summary(monotonicity.def.mysubscale1))
+```
+
+```{r, warning=FALSE, echo=FALSE, message=FALSE}
+# try different minsizes 60 to 10 
+monotonicity.60.mysubscale1 <- check.monotonicity(
+  mysubscale1, minvi = .03, minsize = 60
+)
+summary(monotonicity.60.mysubscale1)
+plot(monotonicity.60.mysubscale1)
+```
+
+
+```{r}
+monotonicity.50.mysubscale1 <- 
+  check.monotonicity(mysubscale1, minvi = .03, minsize = 10)
+# summary(monotonicity.50.mysubscale1)
+plot(monotonicity.50.mysubscale1)
+```
+
+
+## Non-intersecting item step response functions
+
+
+```{r, warning=FALSE, echo=FALSE, message=FALSE}
+# Investigate the assumption of non-intersecting item step response functions (ISRFs) 
+# using method MIIO (appropriate for ordinal items)
+miio.mysubscale1 <- check.iio(mysubscale1)
+# or using rest score (for binary items)
+# restscore.mysubscale1 <- check.restscore(mysubscale1)
+# several other options are available in mokken: pmatrix, mscpm, and IT
+```
+
+```{r results = 'asis', echo=FALSE}
+knitr::kable(summary(miio.mysubscale1)$item.summary)
+```
+
+```{r results = 'asis', echo=FALSE}
+knitr::kable(miio.mysubscale1$violations)
+```
+
+
+
+```{r}
+miio.mysubscale1$items.removed
+```
+
+
+```{r}
+bad <- names(miio.mysubscale1$items.removed)
+final_items <- mysubscale1[, !(names(mysubscale1) %in% bad)]
+```
+
+
+```{r}
+miio.mysubscale1$HT
+```
+
+```{r}
+ miio.mysubscale1$item.mean
+```
+
+
+## Invariant item ordering (IIO)
+
+```{r}
+knitr::kable(summary(miio.mysubscale1)$item.summary)
+```
+
+```{r}
+# Investigate the assumption of non-intersecting item step response functions (ISRFs) at different minsize values
+miio.60.mysubscale1 <- check.iio(mysubscale1, minsize = 60)
+summary(miio.60.mysubscale1)
+miio.50.mysubscale1 <- check.iio(mysubscale1, minsize = 50)
+summary(miio.50.mysubscale1)
+```
+
+```{r}
+plot(miio.50.mysubscale1)
+```
+
+
+# Parametric Item Response Theory models (Rating Scale Model)
+
+* Item fit (infit and outfit). Criteria for item fit are considered as within the mean squares range of 0.6-1.4 and standardized fit statistics of +/−2.0.  If outfit and infit are within these values, they can be considered adequate for measuring the latent construct on an interval-level. 
+
+```{r}
+fit1.Subscale1 <- RSM(
+  mysubscale1 #, constrained = FALSE, Hessian=TRUE
+)
+```
+
+```{r}
+summary(fit1.Subscale1)
+```
+
+```{r}
+ppr <- person.parameter(fit1.Subscale1)
+# goodness of fit indices
+gofIRT(ppr)
+# information criteria
+IC(ppr)
+```
+
+```{r}
+# item-pair residuals for testing local dependencies:
+# fit model with lrm package (eRm does not include these tests)
+# for binary items: Rasch model
+# fit1.ltm.Subscale1 <- rasch(mydata[,Subscale1], constraint = cbind(length(mydata[,Subscale1]) + 1, 1))
+# for ordinal items: 1-parameter GRM (the RSM model is not (yet) implemented in ltm)
+fit1.ltm.Subscale1 <- grm(mysubscale1, constrained =TRUE)
+# model summary (item coefficients are item difficulties with standard errors and standardized z values)
+summary(fit1.ltm.Subscale1)
+# check model fit ( GoF should be ns)
+GoF.rasch(fit1.ltm.Subscale1, B = 199)
+# residuals item pairs ( chisq residuals < 3.5 is good - rule of thumb)
+margins(fit1.ltm.Subscale1)
+# residuals item triplets
+margins(fit1.ltm.Subscale1, type = "three-way", nprint = 2) # prints triplets of items with the highest residual values for each response pattern
+```
+
+
+Plot item difficulty & infit statistics (items should be within the green borders)
+
+```{r, fig.width=10, fig.height=10, warning=FALSE, echo=FALSE, message=FALSE}
+plotPWmap(fit1.Subscale1)
+```
+
+
+## Separation reliability
+
+```{r}
+# item fit (between 0.6 and 1.4 acc to Wright BD, Linacre JM. Reasonable mean-square fit values. Rasch Meas Trans. 1994;8(2):370.)
+itemfit.mysubscale <- itemfit(ppr)
+# names(print(itemfit.mysubscale$i.fit))
+ItemsFitTbl <- as.data.frame(print(itemfit.mysubscale))
+```
+
+```{r results = 'asis', echo=FALSE}
+knitr::kable(ItemsFitTbl)
+```
+
+```{r , warning=FALSE, echo=FALSE, message=FALSE}
+# Personfit (z values should be </= 1.96)
+personfit.mysubscale <- personfit(ppr)
+PersonFitTBL <- as.data.frame(print(personfit.mysubscale))
+# misfitting persons
+misoutfits<- nrow(PersonFitTBL[(PersonFitTBL$p.outfitZ > 1.96 | PersonFitTBL$p.outfitZ < -1.96)  
+                  & (PersonFitTBL$p.outfitMSQ < 0.6| PersonFitTBL$p.outfitMSQ > 1.4 ), ])
+misinfits <- nrow(PersonFitTBL[(PersonFitTBL$p.infitZ > 1.96 | PersonFitTBL$p.infitZ < -1.96)  
+                  & (PersonFitTBL$p.infitMSQ < 0.6| PersonFitTBL$p.infitMSQ > 1.4 ), ])
+# subgroup invariance test (median split) based on Andersen's liekelihood ratio test (should be ns)
+# default splitcr="median", but can also be a separate variable that specified group membership, e.g. gender, 2 disease conditions, etc
+# other test available in the function NPtest
+lrres <- LRtest(fit1.Subscale1, splitcr = "median")
+lrres
+```
+
+Item outfit values ranged between `r round(min(itemfit.mysubscale$i.outfitMSQ), 2)` and `r round(max(itemfit.mysubscale$i.outfitMSQ), 2)`. Item infit values ranged between `r round(min(itemfit.mysubscale$i.infitMSQ), 2)` and `r round(max(itemfit.mysubscale$i.infitMSQ), 2)`. 
+
+There were `r misoutfits` persons with misfit according to outfit values (representing `r round(misoutfits*100/nrow(PersonFitTBL), 2) ` percent), and `r misinfits` persons according to infit values (representing `r round(misinfits*100/nrow(PersonFitTBL), 2)` percent of all participants).
+
+Item difficulty estimates (and confidence elipses) for high and low latent score groups are displayed visually in `r f.ref("fig_2b.5a")`.
+
+```{r, fig.width=10, fig.height=10, warning=FALSE, echo=FALSE, message=FALSE, fig.cap=Fig_2b.5a_cap }
+# plot in a pdf
+# pdf( "./GOF-mydata1.pdf", width=10, height=10, paper="special" );
+# plot item difficulty estimates (& confidence elipses) for high and low latent score groups (should be close to the line, elipses small)
+plotGOF(lrres,conf=list(), tlab="number", cex=0.8)
+# dev.off();
+```
+
+
+Item parameter confidence intervals based on LR test are displayed visually in `r f.ref("fig_2b.6a")`.
+
+```{r, fig.width=10, fig.height=10, warning=FALSE, echo=FALSE, message=FALSE, fig.cap=Fig_2b.6a_cap }
+# plot in a pdf
+# pdf( "./LRES-mydata1.pdf", width=10, height=10, paper="special" );
+# plot item parameter confidence intervals based on LR test
+plotDIF(lrres)
+# dev.off();
+```
+
+
+
+
+# FA
+
+```{r}
+fa.parallel(mysubscale1)
+```
+
+```{r}
+summary(iclust(mysubscale1, title="ICLUST using Pearson correlations"))
+```
+
+```{r}
+omega(mysubscale1, nfactors=1, sl=FALSE)
+```
+
+# CTT
+
+```{r}
+psych::alpha(mysubscale1) 
+```
+
+```{r}
+ci.reliability(
+  data=mysubscale1, 
+  type="omega", 
+  conf.level = 0.95,
+  interval.type="perc", 
+  B=100
+)
+```
+
+
+
+
+```{r}
+model <- 
+'
+  F =~ i9 + i14 + i96 + i151 + i31 + i101 + i159
+'
+```
+
+```{r}
+fit <- lavaan::cfa(
+  model, 
+  data = final_items, 
+  ordered = c("i9",   "i14",  "i96", "i151",  "i31", "i101", "i159")
+  )
+summary(fit)
+```
+
+
+```{r}
+fitMeasures(fit)
+```
+
+```{r}
+formula_va_ord_1pl <- bf(resp ~ 1 + (1 | item) + (1 | id))
+```
+
+```{r}
+fit_va_ord_1pl <- brm(
+  formula = formula_va_ord_1pl,
+  data = selected_items,
+  family = brmsfamily("cumulative", "logit"),
+  prior = prior_va_1pl
+  )
+```
+
