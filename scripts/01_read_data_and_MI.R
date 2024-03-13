@@ -1,4 +1,16 @@
-destfile <- here("data", "processed", "fai_2019_12_17.rds")
+# Script name: 01_read_data_and_MI.R
+# Project: FAI Meyer
+# Script purpose: read data and impute missing values
+# @author: Corrado Caudek <corrado.caudek@unifi.it>
+# Date Created: 20/11/2022
+# Last Modified Date: Thu Jan 26 08:43:42 2023
+#
+# 👉 
+
+library("here")
+source(here::here("scripts", "00_prelims.R"))
+
+destfile <- here::here("data", "processed", "fai_2022_11_20.rds")
 
 if (!file.exists(destfile)) {
   
@@ -25,7 +37,7 @@ if (!file.exists(destfile)) {
   
   saveRDS(
     complete_data, 
-    here("data", "processed", "fai_2019_12_17.rds")
+    here("data", "processed", "fai_2022_11_20.rds")
   )
   
 } else {

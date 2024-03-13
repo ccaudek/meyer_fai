@@ -15,6 +15,9 @@ library("mirt")
 library("lavaan")
 library("mokken")
 library("psych")
+library("gridExtra")
+library("grid")
+library("semTools")
 
 
 df_tot <- readRDS(
@@ -37,21 +40,21 @@ items_skew_kurt_bad <- items_stats |>
 df <- temp |> 
   dplyr::select(!any_of(items_skew_kurt_bad))
 
-
-# First subscale: items names.
+# Area 2 items names.
 item_subscale <- c(
-  "FAI_164", "FAI_180", "FAI_154", "FAI_162", "FAI_105", "FAI_40", "FAI_196",   "FAI_8", 
-  "FAI_134", "FAI_131", "FAI_43",  "FAI_187", "FAI_136", "FAI_54",  "FAI_181", "FAI_50", 
-  "FAI_48",  "FAI_25",  "FAI_133", "FAI_11",  "FAI_33",  "FAI_129", "FAI_169", "FAI_46", 
-  "FAI_174", "FAI_73",  "FAI_127", "FAI_39",  "FAI_112", "FAI_103", "FAI_51",  "FAI_53", 
-  "FAI_58",  "FAI_32"
+  "FAI_164", "FAI_180", "FAI_154", "FAI_162", "FAI_105", "FAI_40", "FAI_196",   
+  "FAI_8", "FAI_134", "FAI_131", "FAI_43",  "FAI_187", "FAI_136", "FAI_54",  
+  "FAI_181", "FAI_50", "FAI_48",  "FAI_25",  "FAI_133", "FAI_11",  "FAI_33",  
+  "FAI_129", "FAI_169", "FAI_46", "FAI_174", "FAI_73",  "FAI_127", "FAI_39",  
+  "FAI_112", "FAI_103", "FAI_51",  "FAI_53", "FAI_58",  "FAI_32"
 ) 
 
-item_subscale_clean <- setdiff(item_subscale, items_skew_kurt_bad)
+# Keep only items without extreme skewness and kurtosis.
+names_item_subscale_clean <- setdiff(item_subscale, items_skew_kurt_bad)
 
-# Select only the items of this subscale.
+# Select subscale items without extreme skewness and kurtosis.
 subscale_data <- df %>% 
-  dplyr::select(all_of(item_subscale_clean))
+  dplyr::select(all_of(names_item_subscale_clean))
 dim(subscale_data)
 
 
@@ -59,68 +62,56 @@ dim(subscale_data)
 #                     STEP 1: DESCRIPTIVE STATISTICS                          #
 # =========================================================================== #
 
-# Descriptives ordinal items.
-descrmyitems <- as.data.frame(round(psych::describe(subscale_data ), 2))
-descrmyitems
+sjPlot::tab_itemscale(
+  subscale_data[, 1:ncol(subscale_data)], 
+  show.kurtosis = T, show.corr.matrix = T
+)
 
-summaries.file <- "summaries.txt";
-cat( "Variable\tNegative\t1\t2\t3\t3\tZeroto2\tThreeto4\tmissing\n", file=summaries.file, append=FALSE );
-# Write a function to include values for an item.
-write.summary.var <- function( x, xname )
-{
-  a1 <- sum( x == 0, na.rm=TRUE );
-  a2 <- sum( x == 1, na.rm=TRUE );
-  a3 <- sum( x == 2, na.rm=TRUE );
-  a4 <- sum( x == 3, na.rm=TRUE );
-  a5 <- sum( x == 4, na.rm=TRUE );
-  a6 <- round((sum( x <=2, na.rm=TRUE )*100/nrow(mydata)), 2);
-  a7 <- round((sum( x >3, na.rm=TRUE )*100/nrow(mydata)), 2);
-  a8 <-sum(is.na(x));
-  cat( paste( xname, "\t", a1, "\t", a2, "\t", a3, "\t", a4, "\t", a5, 
-              "\t", a6, "\t", a7, "\t", a8, "\n", sep="" ), 
-       file=summaries.file, append=TRUE );
+# Write a function that creates a histograms for column 'x'
+many_plots <- function(x) {
+  g <- ggplot(df1, aes(subscale_data[, x])) +
+    geom_bar(color='grey', fill='white', size = 1) +
+    #coord_cartesian(xlim = c(0:7)) + 
+    theme_classic() +
+    geom_vline(
+      aes(xintercept = mean(subscale_data[,x])), size = 1.5, 
+      linetype = 'dashed', col = 'chartreuse1') +
+    xlab(paste("Score |", "Item:", x)) 
+  #scale_x_discrete(limits = c(0:5))
+  print(g)
 }
-# For each item, run this function iteratively.
-for( n in item_subscale) {
-  write.summary.var(subscale_data[,n], n)
+
+# Create an empty container list
+plot_list <- list()
+n_items <- ncol(subscale_data)
+# Fill the container with plots
+for(i in 1:n_items) {
+  p <- many_plots(i)
+  plot_list[[i]] <- p
 }
-# and read the table in R
-myitemssum = read.table( file="summaries.txt", header = TRUE, sep = "\t", quote="\"" )
-# Add column names
-colnames(myitemssum) <- c("Item label","0", "1","2","3","4",  "% 0 to 1", "% 3 to 4", "No. missing")
-myitemssum
 
-myitemssumOrder <- myitemssum[order(myitemssum[, 6]),] # based on the 6th column (% low scores)
-barplot(myitemssumOrder[,"% 3 to 4"], 
-        main = "Low score frequencies for items",
-        xlab="Items", 
-        ylab="Number of respondents", 
-        cex.lab=0.8,
-        cex.axis=0.8,
-        names.arg=myitemssumOrder[, "Item label"], 
-        las=2, 
-        cex.names=0.6)
+# Save a figure with all plots
+plots_scores <- gridExtra::grid.arrange(
+  grobs = plot_list[1:n_items],
+  ncol = 6,
+  nrow = 6,
+  bottom = textGrob(
+    'Note: Dashed line depicts means',
+    hjust = -2,
+    gp = gpar(fontsize = 15, fontface = 'italic')
+  )
+)
 
-myitemssumOrder <- myitemssum[order(myitemssum[, 7]),] # based on the 7th column (% high scores)
-barplot(myitemssumOrder[,"% 3 to 4"], 
-        main = "High score frequencies for items",
-        xlab="Items", 
-        ylab="Number of respondents", 
-        cex.lab=0.8,
-        cex.axis=0.8,
-        names.arg=myitemssumOrder[, "Item label"], 
-        las=2, 
-        cex.names=0.6)
 
-# Plot of the frequency distribution of the responses for each item.
-for( n in item_subscale) {
-  distr <- table(subscale_data[,n])
-  barplot(distr,  
-          main=n, 
-          col=gray.colors(20), 
-          ylab = "Number of respondents", 
-          xlab = "Response (1=Negative, 7=Positive)");
-}
+# # Plot of the frequency distribution of the responses for each item.
+# for(n in item_subscale) {
+#   distr <- table(subscale_data[,n])
+#   barplot(distr,  
+#           main=n, 
+#           col=gray.colors(20), 
+#           ylab = "Number of respondents", 
+#           xlab = "Response (1=Negative, 7=Positive)");
+# }
 
 
 bluesqs <- cor(subscale_data, method = "spearman")
@@ -150,35 +141,30 @@ coefs.h.all <- list(coefs.h[[2]], coefs.h[[3]])
 # Automated Item Selection Procedure (AISP) for Mokken Scale Analysis.
 # Remove items below aisp threshold of 0.3.
 aisp.lb <- mokken::aisp(subscale_data, lowerbound = 0.3)
-kept_h_items <- subscale_data[, aisp.lb == 1]
-names(kept_h_items)
-coefH(kept_h_items)
+kept_items_1 <- subscale_data[, aisp.lb == 1]
+names(kept_items_1)
+coefH(kept_items_1)
 
 
 # Check monotonicity, IIO, and local independence 
 
 # Examine the monotonicity.
-mc <- check.monotonicity(kept_h_items)
+mc <- check.monotonicity(kept_items_1)
 summary(mc)
 plot(mc)
 
 # Check of Invariant Item Ordering (IIO).
-out <- summary(check.iio(kept_h_items))
-out2 <- out$backward.selection 
-colnames(out2) <- c("step1", "step2", "step3", "step4")
-# Select items without IIO violations.
-names_kept_iio_items <- out2 |> 
-  as.data.frame() |> 
-  dplyr::filter(step1 == 0) |> 
-  rownames()
-
+iio.list2 <- check.iio(kept_items_1, method="MIIO")
+summary(iio.list2)
 # Remove items violating IIO for the scale.
-kept_iio_items <- kept_h_items |> 
-  dplyr::select(names_kept_iio_items)
-summary(check.iio(kept_iio_items))
+kept_items_2 <- 
+  kept_items_1[
+    , is.na(charmatch(dimnames(kept_items_1)[[2]], 
+                      names(iio.list2$items.removed)))]
+summary(check.iio(kept_items_2))
 
 # Check local independence (conditional association)
-ca <- mokken::check.ca(kept_iio_items, TRUE)
+ca <- mokken::check.ca(kept_items_2, TRUE)
 # Subcomponents correspond to the iteration. The first subcomponent refers to 
 # the situation with all items in the test, the second subcomponent refers to 
 # the sitution with the worst item deleted, the third subcomponent refers to 
@@ -188,12 +174,12 @@ ca$Index
 ca$Flagged
 
 # Slect items satisfying local independence.
-names_kept_loc_ind_items <- names(kept_iio_items[ca$InScale[[5]]])
+names_kept_loc_ind_items <- names(kept_items_2[ca$InScale[[8]]])
 
 # Select items according to local dependence.
-kept_loc_ind_items <- good_items %>% 
+kept_items_3 <- kept_items_2 %>% 
   dplyr::select(all_of(names_kept_loc_ind_items))
-dim(kept_loc_ind_items)
+dim(kept_items_3)
 
 
 # # Outliers
@@ -218,10 +204,12 @@ dim(kept_loc_ind_items)
 
 # Fit 2PL IRT Generalized Partial Credit Model
 subscale_2pl <- TAM::tam.mml.2pl(
-  kept_loc_ind_items,
+  kept_items_3,
   irtmodel = "GPCM",
-  control = list(Msteps = 10, QMC = FALSE, snodes = 0,
-                 convD = .0001, conv = .00001, convM = .00001)
+  control = list(
+    Msteps = 10, QMC = FALSE, snodes = 0,
+    convD = .0001, conv = .00001, convM = .00001
+  )
 )
 summary(subscale_2pl)
 
@@ -232,12 +220,10 @@ outfit <- subscale_fit$itemfit[, c(1, 3)]
 outfit$delta <- abs(outfit$Outfit - 1)
 outfit %>% 
   arrange(delta)
-# the last one item are bad; the others are good
 
 subscale_rmsd <- IRT.itemfit(subscale_2pl) # RMSD item fit
 subscale_rmsd$RMSD %>% 
   arrange(Group1)
-# perhaps the last two items are bad; the others are good
 
 # (2) Check for local dependence (aQ3), which impairs unidimensionality.
 subscale_res <- TAM::tam.modelfit(subscale_2pl)
@@ -248,27 +234,25 @@ round(subscale_res$aQ3.matr, 3)
 # (3) Look for unreasonable difficulty levels (IRT b), which are either 
 # too hard or too easy for the target population.
 summary(subscale_2pl)
-# i1, i135, i81: beta big or low
 
 # (4) Look for weak slope/discrimination values (IRT a), which indicates 
 # that an item provides relatively little information for reliably 
 # rank-ordering participants.
 summary(subscale_2pl)
-# i1, i86, i47, i167, i99, i132, i85,
 
 # To shorten the original item pool we selected the items that 
 # offered more information by considering the shape of each item 
 # information function, which display the amount of item information
 # along the latent trait. 
 mod <- mirt(
-  data = kept_items,
+  data = kept_items_3,
   1,
   itemtype = "graded",
   SE = TRUE,
   verbose = FALSE
 )
 
-n_item <- length(names(kept_loc_ind_items))
+n_item <- length(names(kept_items_3))
 plot(
   mod,
   type = 'trace',
@@ -288,44 +272,21 @@ plot(
 
 # Selected the items that conveyed higher information along the trait 
 # continuum.
-kept2_items <- c("FAI_127", "FAI_129", "FAI_46", "FAI_33") 
+names_kept_items <- c("FAI_129", "FAI_133", "FAI_25", "FAI_103") 
 # When considering the items content, it can be noted that the
 # retained items addressed the key features of...
-last_items <- subscale_data |> 
+kept_items <- subscale_data |> 
   dplyr::select(
-    all_of(kept2_items)
+    all_of(names_kept_items)
   )
-dim(last_items)
-
-# We also checked the fit indexes of a CFA model.
-one_factor_model <-  '
-  F =~ FAI_127 + FAI_129 + FAI_46 + FAI_33
-'
-
-fit <- lavaan:::cfa(
-  one_factor_model,
-  data = last_items,
-  ordered = names(last_items),
-  std.lv = TRUE
-)
-
-# summary(fit, standardized = TRUE)
-fitMeasures(
-  fit, c("chisq", "df", "cfi", "cfi.scaled", "tli", "tli.scaled",
-         "rmsea", "rmsea.scaled", "srmr")
-)
-# The fit measures are excellent.
-
-
-# Now we redo the fit of the IRT model by considering only the
-# selected items.
+dim(kept_items)
 
 # TAM IRT Models ----
 # 0-4 items, as required by TAM
 
 # Rasch model
 good_items_r <- TAM::tam.mml(
-  last_items,
+  kept_items,
   irtmodel = "PCM",
   control = list(Msteps = 10, QMC = FALSE, snodes = 0, 
                  convD = .0001, conv = .00001, convM = .00001)
@@ -334,7 +295,7 @@ good_items_r <- TAM::tam.mml(
 
 # 2PL IRT Generalized Partial Credit Model
 good_items_2pl <- TAM::tam.mml.2pl(
-  last_items,
+  kept_items,
   irtmodel = "GPCM",
   control = list(Msteps = 10, QMC = FALSE, snodes = 0,
                  convD = .0001, conv = .00001, convM = .00001)
@@ -374,11 +335,11 @@ good_items_res$Q3_summary
 round(good_items_res$aQ3.matr, 3)
 # There are two correlations which are slightly above 0.25.
 
-effectsize::cohens_d(rowSums(good_data), d_clean$death_risk_f)
+# effectsize::cohens_d(rowSums(good_data), d_clean$death_risk_f)
 
-temp <- data.frame(area1 = rowSums(good_data), d_clean$has_emergency_care_f) %>% 
-  drop_na()
-effectsize::cohens_d(temp$area1, temp$has_emergency_care_f)
+# temp <- data.frame(area1 = rowSums(good_data), d_clean$has_emergency_care_f) %>% 
+#   drop_na()
+# effectsize::cohens_d(temp$area1, temp$has_emergency_care_f)
 
 
 # effectsize::cohens_d(rowSums(good_data), demo_info$first_aid)
@@ -393,44 +354,43 @@ effectsize::cohens_d(temp$area1, temp$has_emergency_care_f)
 # =========================================================================== #
 
 # Test sampling adequacy
-psych::KMO(last_items)
-psych::cortest.bartlett(last_items)
+psych::KMO(kept_items)
+psych::cortest.bartlett(kept_items)
 
 # Factor analysis via parallel analysis
-fa.parallel(last_items, cor = "poly")
+fa.parallel(kept_items, cor = "poly")
 
 # Very simple structure analysis
-vss(last_items, 3)
+vss(kept_items, 3)
 
 # Factor analysis
-fa(last_items, nfactors = 1, fm = "minres", n.iter=100)
-fa(last_items, nfactors = 1, fm = "pa", n.iter=100)
+fa(kept_items, nfactors = 1, fm = "minres", n.iter=100)
+fa(kept_items, nfactors = 1, fm = "pa", n.iter=100)
 
 # Plot the fa solution
-plot(fa(last_items, nfactors = 1, fm = "minres"))
+plot(fa(kept_items, nfactors = 1, fm = "minres"))
 
 # Plot diagram fa solution
-fa.diagram(fa(last_items, nfactors = 1, fm = "minres"))
+fa.diagram(fa(kept_items, nfactors = 1, fm = "minres"))
 
 # Factor Miner package PCA
-FactoMineR::PCA(last_items)$eig
+FactoMineR::PCA(kept_items)$eig
 
 # Principal component analysis
-principal(last_items, 1, rotate = "varimax")
+principal(kept_items, 1, rotate = "varimax")
 
 # Hierarchical cluster analysis using ICLUST (groups items)
-iclust(last_items, title = "ICLUST using Pearson correlations")
+iclust(kept_items, title = "ICLUST using Pearson correlations")
 
 # SEM
 # We also checked the fit indexes of a CFA model.
-one_factor_model <-  '
-  F =~ FAI_127 + FAI_129 + FAI_46 + FAI_33
-'
+# one_factor_model <-  'F =~ FAI_127 + FAI_129 + FAI_46 + FAI_33'
+one_factor_model <-  'F =~ FAI_129 + FAI_133 + FAI_25 + FAI_103'
 
 fit <- lavaan:::cfa(
   one_factor_model,
-  data = last_items,
-  ordered = names(last_items),
+  data = kept_items,
+  ordered = names(kept_items),
   std.lv = TRUE
 )
 
@@ -452,20 +412,19 @@ coef(fit)
 lavaan.diagram(fit, errors = T)
 
 # Correlations matrix
-qgraph(cor(last_items), layout = "spring", labels = colnames(last_items))
+qgraph::qgraph(cor(kept_items), layout = "spring", labels = colnames(last_items))
 
 # Partial correlations matrix
-qgraph(cor(last_items), layout = "spring", labels = colnames(last_items), graph = "pcor") 
+qgraph::qgraph(cor(kept_items), layout = "spring", labels = colnames(last_items), graph = "pcor") 
 
-eigen(cov(last_items))$values[1] / eigen(cov(last_items))$values[2]
+eigen(cov(kept_items))$values[1] / eigen(cov(kept_items))$values[2]
 
-
-psych::describe(last_items)
-psych::alpha(last_items)
+psych::describe(kept_items)
+psych::alpha(kept_items)
 
 # parallel analysis
 spar <- fa.parallel(
-  last_items, fm="ml", fa="fa", sim=FALSE,
+  kept_items, fm="ml", fa="fa", sim=FALSE,
   error.bars=TRUE, se.bars=FALSE, n.iter=100
 )
 
@@ -475,14 +434,12 @@ spar <- fa.parallel(
 # =========================================================================== #
 
 # Calculate Cronbach alpha, beta, omega, and split half reliability
-summary(psych::alpha(last_items))
-splitHalf(last_items)
-omega.res <- ci.reliability(last_items, type = "omega", conf.level = 0.95,
-                            interval.type = "perc", B = 100)
-omega.res
+summary(psych::alpha(kept_items))
+splitHalf(kept_items)
+reliability(fit)
 
 # Find Cronbach alpha if an item is dropped 
-sjPlot::tab_itemscale(good_data)
+sjPlot::tab_itemscale(kept_items)
 
 
 # =========================================================================== #
@@ -490,16 +447,15 @@ sjPlot::tab_itemscale(good_data)
 # =========================================================================== #
 
 # Average scale scores
-good_data$afi.mean <- rowMeans(good_data)
+kept_items$area2_mean <- rowMeans(kept_items)
 
 # Scale mean, SD, skewness, kurtosis
-psych::describe(good_data)
-Hmisc::describe(good_data)
-skimr::skim(good_data)
-
+psych::describe(kept_items)
+Hmisc::describe(kept_items)
+skimr::skim(kept_items)
 
 # Examine frequencies & other descriptives
-sjPlot::tab_itemscale(good_data)
+sjPlot::tab_itemscale(kept_items)
 
 
 

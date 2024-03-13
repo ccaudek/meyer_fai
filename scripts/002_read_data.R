@@ -13,15 +13,17 @@ library("readxl")
 library("mice")
 library("careless")
 
-source(
-  here::here("functions", "funs_flag_careless_responding.R")
-)
+source(here::here("functions", "funs_flag_careless_responding.R"))
+source(here::here("functions", "fai_funs.R"))
+
 
 # Read the Excel data.
 fai <- read_xlsx(here("data", "raw", "FAI_TOT_2020_corrected.xlsx"), col_names = TRUE)
 
 # Demographic information.
 demo_info <- fai[, 1:50]
+
+
 
 # Items data.
 items <- fai[, 51:247]
@@ -74,9 +76,16 @@ mydata <- complete_data_corrected
 
 mydata <- flag_careless_responding_LPA(mydata)
 
+dim(mydata)
+
+demo_info_clean <- recode_demo_information(demo_info)
+
+fai_df <- bind_cols(demo_info_clean, mydata)
+
+
 saveRDS(
-  mydata, 
-  here("data", "processed", "fai_2022_11_18.rds")
+  fai_df, 
+  here("data", "processed", "fai_2022_11_20.rds")
 )
 
 

@@ -29,6 +29,7 @@ suppressPackageStartupMessages({
   library("papaja")
   theme_set(theme_apa())
   library("outForest")
+  library("lavaanExtra")
 })
 
 library("here")
@@ -36,7 +37,7 @@ library("here")
 # Increase max print
 options(max.print = .Machine$integer.max)
 
-source(here("libraries", "fai_funs.R"))
+source(here("functions", "fai_funs.R"))
 
 # Read data
 fai_s <- read_xlsx(
@@ -212,7 +213,7 @@ selected_items <- c(
 #   "i195", "i161", "i178", "i128",  "i115", "i66", "i7",
 #   "i171", "i126", "i147" )
 
-final_data <- complete_data %>% 
+final_data <- df %>% 
   dplyr::select(selected_items)
 
 
@@ -224,6 +225,14 @@ fai_model <-  '
   F5 =~ i195 + i161 + i178 + i128 + i115 + i66 + i7
   F6 =~ i159 + i96 + i137 + i101 + i151
 '
+
+# Get fit indices
+nice_fit(fit)
+#   Model     chi2  df chi2.df p   CFI   TLI RMSEA  SRMR AIC BIC
+# 1   fit 1484.483 480   3.093 0 0.981 0.979 0.068 0.073  NA  NA
+
+nice_lavaanPlot(fit, graph_options = list(rankdir = "TB"))
+
 
 # fai_model <-  '
 #   F1 =~ i124 + i106 + i60 + i40 + i175
@@ -257,6 +266,73 @@ fit <- lavaan:::cfa(
   std.lv = TRUE
 )
 
+standardizedSolution(fit)
+# Latent Variables:
+#   Estimate  Std.Err  z-value  P(>|z|)
+# F1 =~                                               
+# i124              0.855    0.020   43.150    0.000
+# i106              0.807    0.025   31.896    0.000
+# i60               0.830    0.023   36.593    0.000
+# i49               0.674    0.038   17.752    0.000
+# i83               0.815    0.030   27.170    0.000
+# F2 =~                                               
+# i25               0.765    0.025   30.285    0.000
+# i129              0.791    0.024   33.218    0.000
+# i105              0.850    0.025   33.655    0.000
+# i133              0.842    0.022   38.393    0.000
+# F3 =~                                               
+# i192              0.852    0.017   48.709    0.000
+# i143              0.841    0.016   52.577    0.000
+# i156              0.849    0.018   48.217    0.000
+# i87               0.875    0.013   65.558    0.000
+# i79               0.837    0.019   45.215    0.000
+# i69               0.801    0.018   44.071    0.000
+# i92               0.841    0.019   43.573    0.000
+# F4 =~                                               
+# i177              0.774    0.024   31.728    0.000
+# i191              0.777    0.027   28.839    0.000
+# i62               0.781    0.028   28.304    0.000
+# i64               0.767    0.026   30.018    0.000
+# i119              0.649    0.035   18.454    0.000
+# F5 =~                                               
+# i195              0.809    0.024   33.868    0.000
+# i161              0.756    0.025   30.235    0.000
+# i178              0.667    0.031   21.731    0.000
+# i128              0.786    0.025   31.580    0.000
+# i115              0.795    0.023   34.406    0.000
+# i66               0.741    0.027   27.103    0.000
+# i7                0.793    0.025   31.396    0.000
+# F6 =~                                               
+# i159              0.775    0.031   25.005    0.000
+# i96               0.721    0.033   21.737    0.000
+# i137              0.734    0.031   23.647    0.000
+# i101              0.555    0.037   14.901    0.000
+# i151              0.667    0.036   18.590    0.000
+# 
+# Covariances:
+#   Estimate  Std.Err  z-value  P(>|z|)
+# F1 ~~                                               
+# F2                0.783    0.025   31.419    0.000
+# F3               -0.100    0.050   -1.987    0.047
+# F4                0.027    0.048    0.556    0.578
+# F5                0.012    0.049    0.237    0.813
+# F6                0.541    0.041   13.269    0.000
+# F2 ~~                                               
+# F3               -0.067    0.050   -1.327    0.184
+# F4                0.203    0.047    4.314    0.000
+# F5                0.073    0.052    1.392    0.164
+# F6                0.723    0.030   24.158    0.000
+# F3 ~~                                               
+# F4                0.486    0.039   12.593    0.000
+# F5                0.590    0.033   17.780    0.000
+# F6               -0.142    0.051   -2.764    0.006
+# F4 ~~                                               
+# F5                0.602    0.035   17.415    0.000
+# F6                0.105    0.051    2.058    0.040
+# F5 ~~                                               
+# F6               -0.026    0.053   -0.483    0.629
+
+
 
 # summary(fit, fit.measures = TRUE, standardized = TRUE, rsquare = TRUE)
 fitMeasures(
@@ -264,6 +340,11 @@ fitMeasures(
   c("chisq", "df", "cfi", "cfi.scaled", "tli", "tli.scaled",
     "rmsea", "rmsea.scaled", "srmr")
 )
+#    chisq           df          cfi   cfi.scaled          tli   tli.scaled        rmsea 
+# 1484.483      480.000        0.981        0.941        0.979        0.935        0.068 
+# rmsea.scaled         srmr 
+#        0.066        0.073 
+
 
 # Descriptives ----
 
@@ -374,4 +455,6 @@ error.bars(final_data)
 
 
 
-
+semTools::compRelSEM(fit)
+#    F1    F2    F3    F4    F5    F6 
+# 0.922 0.865 0.925 0.859 0.886 0.790 

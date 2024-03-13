@@ -13,10 +13,12 @@ library("tidyverse")
 library("TAM")
 library("mirt")
 library("lavaan")
+library("mokken")
+
 
 
 df_tot <- readRDS(
-  here("data", "processed", "fai_2022_11_18.rds")
+  here("data", "processed", "fai_2022_11_20.rds")
 )
 
 temp <- df_tot |> 
@@ -31,6 +33,7 @@ items_stats <- psych::describe(temp)
 items_skew_kurt_bad <- items_stats |> 
   dplyr::filter(skew > 2.5 | kurtosis > 7.5) |> 
   row.names()
+items_skew_kurt_bad
 
 df <- temp |> 
   dplyr::select(!any_of(items_skew_kurt_bad))
@@ -60,6 +63,7 @@ dim(subscale_data)
 descrmyitems <- as.data.frame(round(psych::describe(subscale_data ), 2))
 descrmyitems
 
+# TODO
 summaries.file <- "summaries.txt";
 cat( "Variable\tNegative\t1\t2\t3\t3\tZeroto2\tThreeto4\tmissing\n", file=summaries.file, append=FALSE );
 # Write a function to include values for an item.
@@ -72,7 +76,7 @@ write.summary.var <- function( x, xname )
   a5 <- sum( x == 4, na.rm=TRUE );
   a6 <- round((sum( x <=2, na.rm=TRUE )*100/nrow(mydata)), 2);
   a7 <- round((sum( x >3, na.rm=TRUE )*100/nrow(mydata)), 2);
-  a8 <-sum(is.na(x));
+  a8 <- sum(is.na(x));
   cat( paste( xname, "\t", a1, "\t", a2, "\t", a3, "\t", a4, "\t", a5, 
               "\t", a6, "\t", a7, "\t", a8, "\n", sep="" ), 
        file=summaries.file, append=TRUE );
@@ -136,6 +140,7 @@ corrplot::corrplot(bluesqs, method = 'ellipse', order = 'AOE', type = 'upper')
 # Item properties - Mokken Scaling Analysis 
 
 # Calculate H coefficients
+subscale_data <- as.data.frame(subscale_data)
 coefs.h <- coefH(subscale_data)
 coefs.h$Hi
 coefs.h$H
@@ -144,7 +149,7 @@ coefs.h$H
 coefs.h.all <- list(coefs.h[[2]], coefs.h[[3]])
 
 # remove items below aisp treshold of .55
-aisp.lb <- aisp(subscale_data, lowerbound = .55)
+aisp.lb <- aisp(subscale_data, lowerbound = .3)
 good_items <- subscale_data[, aisp.lb == 1]
 names(good_items)
 coefH(good_items)
@@ -172,11 +177,11 @@ summary(check.iio(good_items))
 # summary(check.iio(good_items %>% select(-c("item12", "item22"))))
 
 # Remove items violating IIo for the scale
-# df3 <- df3 %>% select(-c("item12", "item22"))
+good_items <- good_items %>% dplyr::select(-c("FAI_5", "FAI_81", "FAI_83"))
 summary(check.iio(good_items))
 
 # Check local independence (conditional association)
-ca <- check.ca(good_items, T)
+ca <- check.ca(good_items, TRUE)
 ca$InScale
 ca$Index
 ca$Flagged
@@ -196,6 +201,8 @@ coefH(good_items)$H
 # Q3 <- summary(gPlus)[[5]]
 # IQR <- Q3 - summary(gPlus)[[2]]
 # outlier <- gPlus > Q3 + 1.5 * IQR 
+# not_outlier <- 1 - outlier
+# clean_df <- good_items[not_outlier, ]
 # # if needed to further analyse ouliers
 # foo <- cbind(good_items, gPlus)[outlier,]
 # # then possible sensitivity analysis:
@@ -208,7 +215,7 @@ coefH(good_items)$H
 
 # Fit 2PL IRT Generalized Partial Credit Model
 subscale_2pl <- TAM::tam.mml.2pl(
-  good_items,
+  clean_df,
   irtmodel = "GPCM",
   control = list(Msteps = 10, QMC = FALSE, snodes = 0,
                  convD = .0001, conv = .00001, convM = .00001)
@@ -276,6 +283,10 @@ plot(
   par.settings = simpleTheme(lwd = 2)
 )
 
+
+
+
+
 # # we selected the items that conveyed higher information along 
 # # the trait continuum 
 # good_items <- c("FAI_124", "FAI_106", "FAI_60", "FAI_49") # "i175",
@@ -294,8 +305,8 @@ one_factor_model <-  '
 
 fit <- lavaan:::cfa(
   one_factor_model,
-  data = good_data,
-  ordered = names(good_data),
+  data = good_items,
+  ordered = names(good_items),
   std.lv = TRUE
 )
 
@@ -315,7 +326,7 @@ fitMeasures(
 
 # Rasch model
 good_items_r <- TAM::tam.mml(
-  good_data,
+  good_items,
   irtmodel = "PCM",
   control = list(Msteps = 10, QMC = FALSE, snodes = 0, 
                  convD = .0001, conv = .00001, convM = .00001)
@@ -324,7 +335,7 @@ good_items_r <- TAM::tam.mml(
 
 # 2PL IRT Generalized Partial Credit Model
 good_items_2pl <- TAM::tam.mml.2pl(
-  good_data,
+  good_items,
   irtmodel = "GPCM",
   control = list(Msteps = 10, QMC = FALSE, snodes = 0,
                  convD = .0001, conv = .00001, convM = .00001)
@@ -364,7 +375,7 @@ good_items_res$Q3_summary
 round(good_items_res$aQ3.matr, 3)
 # There are two correlations which are slightly above 0.25.
 
-effectsize::cohens_d(rowSums(good_data), d_clean$death_risk_f)
+effectsize::cohens_d(rowSums(good_items), d_clean$death_risk_f)
 
 temp <- data.frame(area1 = rowSums(good_data), d_clean$has_emergency_care_f) %>% 
   drop_na()
@@ -378,16 +389,16 @@ effectsize::cohens_d(temp$area1, temp$has_emergency_care_f)
 # summary(m)
 
 
-psych::describe(good_data)
-psych::alpha(good_data)
+psych::describe(good_items)
+psych::alpha(good_items)
 
 # parallel analysis
 spar <- fa.parallel(
-  good_data, fm="ml", fa="fa", sim=FALSE,
+  good_items, fm="ml", fa="fa", sim=FALSE,
   error.bars=TRUE, se.bars=FALSE, n.iter=100
 )
 
-eigen(cov(good_data))$values[1] / eigen(cov(good_data))$values[2]
+eigen(cov(good_items))$values[1] / eigen(cov(good_items))$values[2]
 
 # =========================================================================== #
 #                       Step 4: Factor analysis                               #
@@ -430,8 +441,8 @@ one_factor_model <-  '
 
 fit <- lavaan:::cfa(
   one_factor_model,
-  data = good_data,
-  ordered = names(good_data),
+  data = good_items,
+  ordered = names(good_items),
   std.lv = TRUE
 )
 
@@ -453,24 +464,24 @@ coef(fit)
 lavaan.diagram(fit, errors = T)
 
 # Correlations matrix
-qgraph(cor(good_data), layout = "spring", labels = colnames(good_data))
+qgraph(cor(good_items), layout = "spring", labels = colnames(good_items))
 
 # Partial correlations matrix
-qgraph(cor(good_data), layout = "spring", labels = colnames(good_data), graph = "pcor") 
+qgraph(cor(good_data), layout = "spring", labels = colnames(good_items), graph = "pcor") 
 
 # =========================================================================== #
 #           Step 5: Classical Test Theory (CTT)                               #
 # =========================================================================== #
 
 # Calculate Cronbach alpha, beta, omega, and split half reliability
-summary(psych::alpha(good_data))
-splitHalf(good_data)
-omega.res <- ci.reliability(good_data, type = "omega", conf.level = 0.95,
+summary(psych::alpha(good_items))
+splitHalf(good_items)
+omega.res <- ci.reliability(good_items, type = "omega", conf.level = 0.95,
                             interval.type = "perc", B = 100)
 omega.res
 
 # Find Cronbach alpha if an item is dropped 
-sjPlot::tab_itemscale(good_data)
+sjPlot::tab_itemscale(good_items)
 
 
 # =========================================================================== #
@@ -478,16 +489,16 @@ sjPlot::tab_itemscale(good_data)
 # =========================================================================== #
 
 # Average scale scores
-good_data$afi.mean <- rowMeans(good_data)
+good_items$afi.mean <- rowMeans(good_items)
 
 # Scale mean, SD, skewness, kurtosis
-psych::describe(good_data)
-Hmisc::describe(good_data)
-skimr::skim(good_data)
+psych::describe(good_items)
+Hmisc::describe(good_items)
+skimr::skim(good_items)
 
 
 # Examine frequencies & other descriptives
-sjPlot::tab_itemscale(good_data)
+sjPlot::tab_itemscale(good_items)
 
 
 

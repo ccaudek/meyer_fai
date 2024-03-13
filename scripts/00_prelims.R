@@ -7,7 +7,7 @@
 # added 'stargazer' and 'MASS' for sensitivity analyses
 
 for (n in c('foreign', 'car', 'utils', 'relimp', 'ggplot2', 'ggdendro', 
-            'tidyr', 'reshape2', 'tibble', 'captioner', 'stargazer',
+            'tidyr', 'reshape2', 'tibble', 'stargazer',
             'psych', 'memisc', 'Hmisc', 'ltm', 'MASS',
             'lavaan','semTools','semPlot', 'qgraph','sem',
             'mirt', 'eRm', 'mokken', 'rgl','scales',
@@ -28,14 +28,14 @@ options(max.print = 1000000)
 
 # add captioning for figures and tables (as here: https://www.r-bloggers.com/r-markdown-how-to-number-and-reference-tables/)
 
-table_nums <- captioner::captioner(prefix = "Table")
-figure_nums <- captioner::captioner(prefix = "Figure")
-t.ref <- function(x) {
-  stringr::str_extract(table_nums(x), "[^:]*")
-}
-f.ref <- function(x) {
-  stringr::str_extract(figure_nums(x), "[^:]*")
-}
+# table_nums <- captioner::captioner(prefix = "Table")
+# figure_nums <- captioner::captioner(prefix = "Figure")
+# t.ref <- function(x) {
+#   stringr::str_extract(table_nums(x), "[^:]*")
+# }
+# f.ref <- function(x) {
+#   stringr::str_extract(figure_nums(x), "[^:]*")
+# }
 
 # add functions needed in analyses
 
