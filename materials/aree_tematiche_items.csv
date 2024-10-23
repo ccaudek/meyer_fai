@@ -1,0 +1,198 @@
+Item_Code,Description,Area,Subscale
+i49,"1.     Mio figlio ha difficoltà, temporanee o permanenti, a livello motorio",AREA 1: CARATTERISTICHE DEL BAMBINO,FUNZIONAMENTO
+i175,2.     Mio figlio ha difficoltà intellettive,AREA 1: CARATTERISTICHE DEL BAMBINO,FUNZIONAMENTO
+i106,3.     Mio figlio ha sintomi (es. dolore) che lo limitano nelle sue attività quotidiane,AREA 1: CARATTERISTICHE DEL BAMBINO,FUNZIONAMENTO
+i60,"4.     A causa della sua condizione di salute (difficoltà o sintomi legati alla malattia), mio figlio necessita di supporto nello svolgimento delle attività quotidiane",AREA 1: CARATTERISTICHE DEL BAMBINO,FUNZIONAMENTO
+i124,5.     La condizione di salute di mio figlio (difficoltà o sintomi legati alla malattia) lo limita nello svolgimento delle attività,AREA 1: CARATTERISTICHE DEL BAMBINO,FUNZIONAMENTO
+i86,6.     Mio figlio è irritabile,AREA 1: CARATTERISTICHE DEL BAMBINO,PROBLEMI COMPORTAMENTALI
+i152,"7.     Mio figlio ha comportamenti aggressivi verso persone, animali o cose",AREA 1: CARATTERISTICHE DEL BAMBINO,PROBLEMI COMPORTAMENTALI
+i1,8.     Mio figlio si mette in situazioni di pericolo,AREA 1: CARATTERISTICHE DEL BAMBINO,PROBLEMI COMPORTAMENTALI
+i47,9.     Mio figlio è in grado di mantenere l’attenzione su un’attività per più tempo,AREA 1: CARATTERISTICHE DEL BAMBINO,PROBLEMI COMPORTAMENTALI
+i121,10.   Mio figlio è triste,AREA 1: CARATTERISTICHE DEL BAMBINO,PROBLEMI COMPORTAMENTALI
+i57,11.   Mio figlio si isola,AREA 1: CARATTERISTICHE DEL BAMBINO,PROBLEMI COMPORTAMENTALI
+i167,12.   Mio figlio ha un rapporto equilibrato col cibo,AREA 1: CARATTERISTICHE DEL BAMBINO,PROBLEMI COMPORTAMENTALI
+i91,13.   Mio figlio ha un sonno disturbato,AREA 1: CARATTERISTICHE DEL BAMBINO,PROBLEMI COMPORTAMENTALI
+i99,14.   Mio figlio è sereno quando è lontano dai suoi genitori,AREA 1: CARATTERISTICHE DEL BAMBINO,PROBLEMI COMPORTAMENTALI
+i135,"15.   Mio figlio ha sintomi fisici senza una causa medica (es. dolore in alcune parti del corpo, diarrea, nausea, stanchezza, problemi alla vista, sfoghi cutanei, vertigini)",AREA 1: CARATTERISTICHE DEL BAMBINO,PROBLEMI COMPORTAMENTALI
+i63,16.   Mio figlio si relaziona con i coetanei senza difficoltà,AREA 1: CARATTERISTICHE DEL BAMBINO,PROBLEMI COMPORTAMENTALI
+i168,17.   Credo che mio figlio si ammali più facilmente dei suoi coetanei,AREA 1: CARATTERISTICHE DEL BAMBINO,PERCEZIONE DI VULNERABILITA’ DEL BAMBINO DA PARTE DEL GENITORE
+i5,18.   Credo che a mio figlio accadano più cose negative che ai suoi coetanei,AREA 1: CARATTERISTICHE DEL BAMBINO,PERCEZIONE DI VULNERABILITA’ DEL BAMBINO DA PARTE DEL GENITORE
+i132,19.   Credo che mio figlio abbia la stessa energia dei suoi coetanei,AREA 1: CARATTERISTICHE DEL BAMBINO,PERCEZIONE DI VULNERABILITA’ DEL BAMBINO DA PARTE DEL GENITORE
+i85,20.   Credo che mio figlio sia in grado di superare le situazioni difficili,AREA 1: CARATTERISTICHE DEL BAMBINO,PERCEZIONE DI VULNERABILITA’ DEL BAMBINO DA PARTE DEL GENITORE
+i81,21.   Mi preoccupo che i problemi di salute di mio figlio possano influenzare negativamente il suo futuro,AREA 1: CARATTERISTICHE DEL BAMBINO,PERCEZIONE DI VULNERABILITA’ DEL BAMBINO DA PARTE DEL GENITORE
+i183,22.   Credo che mio figlio recuperi facilmente dopo un problema di salute,AREA 1: CARATTERISTICHE DEL BAMBINO,PERCEZIONE DI VULNERABILITA’ DEL BAMBINO DA PARTE DEL GENITORE
+i164,"23.   Nonostante la malattia di mio figlio, ho tempo per me",AREA 2: RICHIESTE DI CAREGIVING,CONFLITTO TRA RUOLO DI CAREGIVERE E RUOLO SOCIALE E LAVORATIVO
+i180,24.   La mia vita vale la pena di essere vissuta,AREA 2: RICHIESTE DI CAREGIVING,CONFLITTO TRA RUOLO DI CAREGIVERE E RUOLO SOCIALE E LAVORATIVO
+i154,25.   Riesco a svolgere bene la mia attività lavorativa,AREA 2: RICHIESTE DI CAREGIVING,CONFLITTO TRA RUOLO DI CAREGIVERE E RUOLO SOCIALE E LAVORATIVO
+i162,26.   La mia famiglia ha difficoltà economiche emerse in seguito alla malattia di mio figlio,AREA 2: RICHIESTE DI CAREGIVING,CONFLITTO TRA RUOLO DI CAREGIVERE E RUOLO SOCIALE E LAVORATIVO
+i105,27.   La malattia di mio figlio limita la mia vita,AREA 2: RICHIESTE DI CAREGIVING,CONFLITTO TRA RUOLO DI CAREGIVERE E RUOLO SOCIALE E LAVORATIVO
+i40,28.   Riesco ad integrare gli impegni di lavoro con la cura di mio figlio,AREA 2: RICHIESTE DI CAREGIVING,CONFLITTO TRA RUOLO DI CAREGIVERE E RUOLO SOCIALE E LAVORATIVO
+i196,29.   Mi crea disagio integrare gli impegni di lavoro con la cura di mio figlio,AREA 2: RICHIESTE DI CAREGIVING,CONFLITTO TRA RUOLO DI CAREGIVERE E RUOLO SOCIALE E LAVORATIVO
+i8,30.   Sento di avere un posto nella società,AREA 2: RICHIESTE DI CAREGIVING,CONFLITTO TRA RUOLO DI CAREGIVERE E RUOLO SOCIALE E LAVORATIVO
+i134,31.   Quando non sono con mio figlio mi sembra di perdere tempo,AREA 2: RICHIESTE DI CAREGIVING,CONFLITTO TRA RUOLO DI CAREGIVERE E RUOLO SOCIALE E LAVORATIVO
+i131,32.   Mi occupo dell’igiene personale di mio figlio,AREA 2: RICHIESTE DI CAREGIVING,ASSISTENZA FISICA/MEDICA
+i43,"33.   Mi occupo di gestire la routine medica di mio figlio (terapie mediche, visite, ecc.)",AREA 2: RICHIESTE DI CAREGIVING,ASSISTENZA FISICA/MEDICA
+i187,"34.   Mi occupo della gestione dei dispositivi medici di mio figlio (es. accessi venosi, respiratori, ecc.)",AREA 2: RICHIESTE DI CAREGIVING,ASSISTENZA FISICA/MEDICA
+i136,"35.   Resto accanto a mio figlio durante le procedure mediche (es. prelievo, iniezioni, ecc.)",AREA 2: RICHIESTE DI CAREGIVING,ASSISTENZA FISICA/MEDICA
+i54,"36.   Mi occupo di sostenere mio figlio nelle attività quotidiane (es. vestirsi, alimentarsi, andare in bagno, ecc.)",AREA 2: RICHIESTE DI CAREGIVING,ASSISTENZA FISICA/MEDICA
+i181,37.   Mi capita di dover assistere mio figlio durante la notte,AREA 2: RICHIESTE DI CAREGIVING,ASSISTENZA FISICA/MEDICA
+i50,38.   Mi trovo ad affrontare eventi inattesi legati alla malattia di mio figlio,AREA 2: RICHIESTE DI CAREGIVING,ASSISTENZA FISICA/MEDICA
+i48,39.   Prendere decisioni sulle cure di mio figlio è per me stressante,AREA 2: RICHIESTE DI CAREGIVING,ASSISTENZA FISICA/MEDICA
+i25,40.   Sono preoccupato per la malattia di mio figlio,AREA 2: RICHIESTE DI CAREGIVING,PREOCCUPAZIONI GENITORIALI PER LA MALATTIA
+i133,41.   Ho paura di perdere mio figlio a causa della sua malattia,AREA 2: RICHIESTE DI CAREGIVING,PREOCCUPAZIONI GENITORIALI PER LA MALATTIA
+i11,42.   Sono preoccupato per gli effetti collaterali che i trattamenti farmacologici potrebbero avere su mio figlio,AREA 2: RICHIESTE DI CAREGIVING,PREOCCUPAZIONI GENITORIALI PER LA MALATTIA
+i33,43.   Sono preoccupato per gli effetti a lungo termine che i trattamenti farmacologici potrebbero avere su mio figlio,AREA 2: RICHIESTE DI CAREGIVING,PREOCCUPAZIONI GENITORIALI PER LA MALATTIA
+i129,44.   Ho paura che la malattia di mio figlio peggiori,AREA 2: RICHIESTE DI CAREGIVING,PREOCCUPAZIONI GENITORIALI PER LA MALATTIA
+i169,45.   Mi preoccupo che la malattia di mio figlio possa colpire un altro membro della famiglia,AREA 2: RICHIESTE DI CAREGIVING,PREOCCUPAZIONI GENITORIALI PER LA MALATTIA
+i46,46.   Sono preoccupato che la malattia di mio figlio possa avere delle conseguenze sugli altri membri della famiglia,AREA 2: RICHIESTE DI CAREGIVING,PREOCCUPAZIONI GENITORIALI PER LA MALATTIA
+i174,47.   Capita che assistere mio figlio mi irriti,AREA 2: RICHIESTE DI CAREGIVING,CARICO EMOTIVO
+i73,48.   I rapporti con i medici sono per me stressanti,AREA 2: RICHIESTE DI CAREGIVING,CARICO EMOTIVO
+i127,49.   La malattia di mio figlio mi provoca stanchezza,AREA 2: RICHIESTE DI CAREGIVING,CARICO EMOTIVO
+i39,50.   Ho l’impressione di non farcela ad affrontare tutti i problemi che ho,AREA 2: RICHIESTE DI CAREGIVING,CARICO EMOTIVO
+i112,51.   Quando penso alla condizione di salute di mio figlio ho difficoltà a contenere la rabbia,AREA 2: RICHIESTE DI CAREGIVING,CARICO EMOTIVO
+i103,52.   Provo rabbia quando penso alla malattia di mio figlio,AREA 2: RICHIESTE DI CAREGIVING,CARICO EMOTIVO
+i51,53.   Provo invidia verso i genitori che hanno figli sani,AREA 2: RICHIESTE DI CAREGIVING,CARICO EMOTIVO
+i53,54.   Provo invidia verso i genitori che hanno figli con una malattia meno grave rispetto a mio figlio,AREA 2: RICHIESTE DI CAREGIVING,CARICO EMOTIVO
+i58,55.   Le responsabilità di genitore mi fanno sentire in trappola,AREA 2: RICHIESTE DI CAREGIVING,CARICO EMOTIVO
+i32,56.   Mi capita di sentirmi a disagio quando esco con mio figlio,AREA 2: RICHIESTE DI CAREGIVING,CARICO EMOTIVO
+i156,57.   Il personale sanitario è rispettoso verso la mia famiglia,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i67,58.   Mi sento ascoltato dal personale sanitario,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i176,59.   Il personale sanitario ascolta le richieste di mio figlio,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i77,"60.   Mi sento discriminato dal personale sanitario per una caratteristica della mia famiglia (es. etnia, cultura, provenienza territoriale, religione, ecc.)",AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i28,"61.   Mi sento supportato dal personale sanitario nella gestione della malattia di mio figlio, anche in situazioni difficili",AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i149,62.   Mi sento apprezzato nel mio ruolo di genitore da parte del personale sanitario,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i35,63.   Mi sento supportato nel mio ruolo di genitore da parte del personale sanitario,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i192,64.   Mi sento supportato dal personale sanitario nella gestione dei medicamenti/presidi medici,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i87,65.   Il personale sanitario mi informa adeguatamente sulla salute di mio figlio,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i143,66.   Il personale sanitario mi aiuta nelle scelte riguardanti la salute di mio figlio,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i90,67.   Sento di poter parlare con i medici dei miei dubbi sulle condizioni mediche di mio figlio,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i160,68.   Il personale sanitario è flessibile rispetto alle esigenze della mia famiglia,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i69,69.   Sento che il personale sanitario mi da tutte le informazioni sulla salute di mio figlio,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i170,70.   Il personale sanitario è sincero con me,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i79,71.   Mi fido del personale sanitario che segue mio figlio,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i24,72.   Ho difficoltà a parlare con i medici,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i76,73.   La struttura ospedaliera ostacola il contatto tra famiglie,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i114,74.   Mi sento coinvolto dal personale sanitario nel percorso di cura di mio figlio,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i74,75.   Il personale sanitario non si prende adeguatamente cura di mio figlio,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i92,76.   In ospedale fanno tutto il possibile affinché mio figlio stia meglio,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i163,77.   L’ospedale ha in mente l’interesse della mia famiglia,AREA 3: PERCEZIONE DELLA CURA FORMALE,CARICO EMOTIVO
+i177,78.   Ho una visione positiva di me,AREA 4: FATTORI INTRAPSICHICI,AUTOSTIMA
+i191,79.   Ho rispetto per me stesso,AREA 4: FATTORI INTRAPSICHICI,AUTOSTIMA
+i122,80.   Penso di meritarmi l’affetto degli altri,AREA 4: FATTORI INTRAPSICHICI,AUTOSTIMA
+i62,81.   Ho fiducia in me stesso,AREA 4: FATTORI INTRAPSICHICI,AUTOSTIMA
+i104,82.   So prendermi cura dei miei figli,AREA 4: FATTORI INTRAPSICHICI,AUTOSTIMA
+i42,83.   Credo di essere una buona guida per mio figlio,AREA 4: FATTORI INTRAPSICHICI,AUTOSTIMA
+i111,84.   Mi sento un buon genitore,AREA 4: FATTORI INTRAPSICHICI,AUTOSTIMA
+i64,85.   Sento di avere le risorse necessarie per affrontare le sfide della vita,AREA 4: FATTORI INTRAPSICHICI,SENSO DI PADRONANZA
+i34,86.   Sento di potercela fare anche quando tutto sembra difficile,AREA 4: FATTORI INTRAPSICHICI,SENSO DI PADRONANZA
+i75,87.   Di fronte ai problemi riesco a trovare una soluzione,AREA 4: FATTORI INTRAPSICHICI,SENSO DI PADRONANZA
+i65,88.   Riesco a gestire le necessità di mio figlio,AREA 4: FATTORI INTRAPSICHICI,SENSO DI PADRONANZA
+i108,89.   Riesco a sopportare la situazione quando mio figlio sta male,AREA 4: FATTORI INTRAPSICHICI,SENSO DI PADRONANZA
+i119,90.   Credo di contribuire positivamente al benessere di mio figlio,AREA 4: FATTORI INTRAPSICHICI,SENSO DI PADRONANZA
+i138,91.   Mi sento inutile quando mi prendo cura di mio figlio,AREA 4: FATTORI INTRAPSICHICI,SENSO DI PADRONANZA
+i116,92.   Penso al perché la malattia ha colpito mio figlio,AREA 4: FATTORI INTRAPSICHICI,COGNIZIONE DI MALATTIA
+i20,93.   Vivo la malattia di mio figlio come qualcosa di irreale,AREA 4: FATTORI INTRAPSICHICI,COGNIZIONE DI MALATTIA
+i145,94.   Penso sia ingiusto che mio figlio si sia ammalato,AREA 4: FATTORI INTRAPSICHICI,COGNIZIONE DI MALATTIA
+i59,95.   Accetto il fatto che mio figlio sia malato,AREA 4: FATTORI INTRAPSICHICI,COGNIZIONE DI MALATTIA
+i118,96.   Eventi come la malattia di mio figlio fanno parte della vita,AREA 4: FATTORI INTRAPSICHICI,COGNIZIONE DI MALATTIA
+i173,97.   Non accetto che mio figlio si sia ammalato,AREA 4: FATTORI INTRAPSICHICI,COGNIZIONE DI MALATTIA
+i23,98.   Accetto gli aspetti della malattia che non si possono controllare,AREA 4: FATTORI INTRAPSICHICI,COGNIZIONE DI MALATTIA
+i45,99.   Mi sento responsabile per la condizione di salute di mio figlio,AREA 4: FATTORI INTRAPSICHICI,COGNIZIONE DI MALATTIA
+i179,100.Accetto che mio figlio debba convivere con la sua malattia e le possibili conseguenze,AREA 4: FATTORI INTRAPSICHICI,COGNIZIONE DI MALATTIA
+i41,101.L’esperienza della malattia di mio figlio mi fa crescere come persona,AREA 4: FATTORI INTRAPSICHICI,COGNIZIONE DI MALATTIA
+i139,102.La malattia di mio figlio mi aiuta a capire quali sono le cose importanti della vita,AREA 4: FATTORI INTRAPSICHICI,COGNIZIONE DI MALATTIA
+i4,103.La malattia di mio figlio mi insegna a godere di più del momento presente,AREA 4: FATTORI INTRAPSICHICI,COGNIZIONE DI MALATTIA
+i56,104.La malattia di mio figlio mi fa vedere nuovi aspetti positivi della vita,AREA 4: FATTORI INTRAPSICHICI,COGNIZIONE DI MALATTIA
+i166,105.Penso di poter contribuire nella gestione della malattia di mio figlio,AREA 4: FATTORI INTRAPSICHICI,COGNIZIONE DI MALATTIA
+i193,106.Considero la malattia di mio figlio come un fallimento personale,AREA 4: FATTORI INTRAPSICHICI,COGNIZIONE DI MALATTIA
+i83,107.La malattia di mio figlio controlla la mia vita,AREA 4: FATTORI INTRAPSICHICI,COGNIZIONE DI MALATTIA
+i21,108.Penso che la malattia di mio figlio sia incontrollabile in tutti i suoi aspetti,AREA 4: FATTORI INTRAPSICHICI,COGNIZIONE DI MALATTIA
+i93,109.Penso che le cose che faccio per mio figlio gli siano utili,AREA 4: FATTORI INTRAPSICHICI,COGNIZIONE DI MALATTIA
+i98,110.Quando ne ho bisogno ricevo aiuto concreto,AREA 5: COPING,SUPPORTO SOCIALE
+i125,111. In caso di emergenza ricevo l’aiuto di cui ho bisogno,AREA 5: COPING,SUPPORTO SOCIALE
+i186,112. Ho persone con cui poter condividere liberamente i miei stati d’animo e problemi,AREA 5: COPING,SUPPORTO SOCIALE
+i130,113. Quando ho bisogno di un consiglio ho persone a cui rivolgermi,AREA 5: COPING,SUPPORTO SOCIALE
+i44,114. Non parlo dei miei problemi perché nessuno è in grado di aiutarmi,AREA 5: COPING,SUPPORTO SOCIALE
+i172,115. Se avessi bisogno di confrontarmi con qualcuno che affronta situazioni simili alle mie saprei a chi rivolgermi,AREA 5: COPING,SUPPORTO SOCIALE
+i195,116. Sento l’affetto delle persone a cui voglio bene,AREA 5: COPING,SUPPORTO SOCIALE
+i66,117. Quando mi sento solo so di poter contare su qualcuno,AREA 5: COPING,SUPPORTO SOCIALE
+i190,118. Le persone che mi stanno intorno non mi considerano come vorrei,AREA 5: COPING,SUPPORTO SOCIALE
+i18,119. Ho persone con cui posso trascorrere il tempo libero,AREA 5: COPING,SUPPORTO SOCIALE
+i94,"120. Quando mi sfogo e racconto i miei stati d’animo, mi sento ascoltato e compreso",AREA 5: COPING,SUPPORTO SOCIALE
+i80,121. Sento che gli altri rispettano i miei sentimenti,AREA 5: COPING,SUPPORTO SOCIALE
+i117,122. Mi sento apprezzato dalle persone,AREA 5: COPING,SUPPORTO SOCIALE
+i100,123. Ricevo dagli altri l’affetto di cui ho bisogno,AREA 5: COPING,SUPPORTO SOCIALE
+i38,124.Sento che persone che considero amiche si stanno allontanando,AREA 5: COPING,SUPPORTO SOCIALE
+i36,125.In famiglia ognuno si interessa di ciò che accade agli altri,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i97,126.In famiglia è difficile dimostrare apertamente l’affetto reciproco,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i197,"127.In famiglia ognuno prende decisioni in autonomia, senza condividerle con gli altri",AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i189,"128.Qualsiasi difficoltà abbia un familiare, anche minima, diventa la priorità della famiglia",AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i185,129.Non mi trovo bene con nessun altro come con i miei familiari,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i88,"130.La mia famiglia è tutto ciò che serve per essere completamente felici, il resto non è indispensabile",AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i107,131.Rinuncio ai miei desideri per accontentare i miei familiari,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i30,132.Penso che sia giusto essere amici dei figli,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i19,"133.Quando siamo lontani, io e i miei familiari ci sentiamo persi",AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i161,134.In famiglia quando qualcuno è triste cerchiamo di sostenerlo,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i128,135.Di fronte alle difficoltà la mia famiglia rimane unita,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i22,136.In casa ognuno rispetta gli spazi e le cose degli altri,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i12,137.In famiglia non permettiamo ai figli di discutere le decisioni che li riguardano,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i52,138.In famiglia le decisioni vengono prese da un unico adulto,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i95,139.Le regole della famiglia possono essere modificate,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i68,140.In famiglia non ci sono regole fisse,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i148,141.In famiglia non c’è una persona di riferimento,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i140,142.In famiglia le decisioni vengono cambiate continuamente in base alle richieste di ogni membro,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i71,143.In famiglia non abbiamo ruoli chiari e definiti,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i72,144.Nella mia famiglia i figli riescono a comandare,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i142,145.In famiglia i figli rispettano le punizioni,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i70,146.In famiglia le decisioni che riguardano tutti vengono condivise con i figli,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i141,147.In famiglia quando organizziamo il tempo libero teniamo in considerazione le preferenze dei figli,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i15,148.Ricevo supporto dal mio partner o altri membri adulti della mia famiglia,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i115,149.Mi sento in sintonia con la mia famiglia,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i120,150.Mi piace la mia famiglia,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i7,151.Sento di poter contare sulla mia famiglia,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i102,152.In famiglia quando parliamo ciascuno si interessa a ciò che gli altri hanno da dire,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i178,153.In famiglia riusciamo a parlare delle nostre emozioni,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i16,154.In famiglia condividiamo preoccupazioni e ansie,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i89,155.In famiglia non ci capiamo,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i10,156.In famiglia ci accorgiamo cosa pensano e come si sentono gli altri senza bisogno di parlare,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i6,157.In famiglia scherziamo tra di noi,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i155,158.In famiglia ci confrontiamo su qualsiasi argomento,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i82,159.In famiglia ci critichiamo,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i113,160.In famiglia discutiamo in modo acceso,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i3,"161.In famiglia si accettano le opinioni di tutti, anche quando sono contrapposte",AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i146,162.In famiglia troviamo tempo per parlare,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i29,"163.In famiglia riteniamo importante proteggere mio figlio, tacendo su alcuni aspetti della sua malattia",AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i157,"164.In famiglia quando parliamo a mio figlio della malattia, modifichiamo le informazioni",AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i26,165.In famiglia incoraggiamo mio figlio a fare domande sulla sua malattia,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i61,166.In famiglia ci è difficile parlare della malattia di mio figlio,AREA 5: COPING,FUNZIONAMENTO FAMILIARE
+i9,167.Controllo che mio figlio faccia le cose come gli ho insegnato,AREA 6: IPERPROTEZIONE,FUNZIONAMENTO FAMILIARE
+i153,168.Mi capita di rifare le cose fatte da mio figlio perché non vanno bene,AREA 6: IPERPROTEZIONE,FUNZIONAMENTO FAMILIARE
+i2,169.Scelgo per mio figlio le amicizie più adatte a lui,AREA 6: IPERPROTEZIONE,FUNZIONAMENTO FAMILIARE
+i137,170.Allontanarmi da mio figlio mi crea disagio,AREA 6: IPERPROTEZIONE,FUNZIONAMENTO FAMILIARE
+i96,171.Quando sono lontano da mio figlio mi chiedo di continuo se va tutto bene,AREA 6: IPERPROTEZIONE,FUNZIONAMENTO FAMILIARE
+i165,"172.Quando non ci sono, affido con serenità mio figlio ad altre persone",AREA 6: IPERPROTEZIONE,FUNZIONAMENTO FAMILIARE
+i194,173.Incoraggio mio figlio a fare le cose senza di me,AREA 6: IPERPROTEZIONE,FUNZIONAMENTO FAMILIARE
+i13,174.Mi spaventa l’idea che mio figlio un giorno possa non avere più bisogno di me come adesso,AREA 6: IPERPROTEZIONE,FUNZIONAMENTO FAMILIARE
+i14,175.Mi piace quando mio figlio viene a chiedermi aiuto,AREA 6: IPERPROTEZIONE,FUNZIONAMENTO FAMILIARE
+i101,176.Non perdo mai di vista mio figlio,AREA 6: IPERPROTEZIONE,FUNZIONAMENTO FAMILIARE
+i144,177.Quando mio figlio è con gli amici preferisco essere presente,AREA 6: IPERPROTEZIONE,FUNZIONAMENTO FAMILIARE
+i31,178.Ho bisogno di sapere tutto ciò che fa mio figlio quando non ci sono,AREA 6: IPERPROTEZIONE,FUNZIONAMENTO FAMILIARE
+i151,"179.A causa della malattia di mio figlio, sono più protettivo",AREA 6: IPERPROTEZIONE,FUNZIONAMENTO FAMILIARE
+i159,"180.Data la malattia di mio figlio, vorrei trascorrere tutto il tempo con lui",AREA 6: IPERPROTEZIONE,FUNZIONAMENTO FAMILIARE
+i182,"181.A causa della malattia di mio figlio, faccio fatica a stargli vicino",AREA 6: IPERPROTEZIONE,FUNZIONAMENTO FAMILIARE
+i27,182.Permetto a mio figlio di condividere con gli altri gli aspetti legati alla sua malattia,AREA 6: IPERPROTEZIONE,FUNZIONAMENTO FAMILIARE
+i188,"183.Se possibile, sono disponibile a portare i fratelli con mio figlio quando si trova in ospedale per ricoveri o visite",AREA 7: FRATELLI,FUNZIONAMENTO FAMILIARE
+i17,184.I fratelli conoscono lo stato di salute di mio figlio,AREA 7: FRATELLI,FUNZIONAMENTO FAMILIARE
+i184,"185.In famiglia riteniamo importante proteggere i fratelli, tacendo su alcuni aspetti della malattia di mio figlio",AREA 7: FRATELLI,FUNZIONAMENTO FAMILIARE
+i147,186.In famiglia parliamo ai fratelli della malattia di mio figlio,AREA 7: FRATELLI,FUNZIONAMENTO FAMILIARE
+i109,"187.In famiglia quando parliamo ai fratelli della malattia di mio figlio, modifichiamo le informazioni",AREA 7: FRATELLI,FUNZIONAMENTO FAMILIARE
+i37,188.Sento di non essere presente come vorrei nella vita degli altri figli,AREA 7: FRATELLI,FUNZIONAMENTO FAMILIARE
+i171,189.Sono soddisfatto del rapporto che ho con gli altri figli,AREA 7: FRATELLI,FUNZIONAMENTO FAMILIARE
+i78,190.La vita degli altri figli è cambiata in modo negativo,AREA 7: FRATELLI,FUNZIONAMENTO FAMILIARE
+i126,191.Riesco a prendermi cura degli altri figli come del fratello malato,AREA 7: FRATELLI,FUNZIONAMENTO FAMILIARE
+i84,192. Presto attenzione alle emozioni che gli altri figli provano verso il fratello malato,AREA 7: FRATELLI,FUNZIONAMENTO FAMILIARE
+i55,193. Quando mi concentro sulla cura di mio figlio ho in mente anche le esigenze dei fratelli,AREA 7: FRATELLI,FUNZIONAMENTO FAMILIARE
+i110,"194.Per prendermi cura di mio figlio, sento di aver messo da parte i fratelli",AREA 7: FRATELLI,FUNZIONAMENTO FAMILIARE
+i123,195.Incoraggio la vicinanza tra mio figlio e i suoi fratelli,AREA 7: FRATELLI,FUNZIONAMENTO FAMILIARE
+i150,"196.Rendo partecipi i fratelli nella cura di mio figlio come desiderano, rispettando eventuali limiti o difficoltà",AREA 7: FRATELLI,FUNZIONAMENTO FAMILIARE
+i158,197.Mi è difficile conciliare le esigenze di mio figlio con quelle dei fratelli,AREA 7: FRATELLI,FUNZIONAMENTO FAMILIARE
