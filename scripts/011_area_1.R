@@ -19,6 +19,7 @@ library("mokken")
 
 df_tot <- readRDS(
   here("data", "processed", "fai_2022_11_20.rds")
+  # here("data", "processed", "fai_2024_10_23.rds")
 )
 
 temp <- df_tot |> 
@@ -177,7 +178,7 @@ summary(check.iio(good_items))
 # summary(check.iio(good_items %>% select(-c("item12", "item22"))))
 
 # Remove items violating IIo for the scale
-good_items <- good_items %>% dplyr::select(-c("FAI_5", "FAI_81", "FAI_83"))
+good_items <- good_items %>% dplyr::select(-c("FAI_5", "FAI_124", "FAI_60"))
 summary(check.iio(good_items))
 
 # Check local independence (conditional association)
@@ -215,7 +216,7 @@ coefH(good_items)$H
 
 # Fit 2PL IRT Generalized Partial Credit Model
 subscale_2pl <- TAM::tam.mml.2pl(
-  clean_df,
+  good_items,
   irtmodel = "GPCM",
   control = list(Msteps = 10, QMC = FALSE, snodes = 0,
                  convD = .0001, conv = .00001, convM = .00001)
@@ -300,7 +301,7 @@ plot(
 
 # We also checked the fit indexes of a CFA model.
 one_factor_model <-  '
-  F1 =~ FAI_124 + FAI_106 + FAI_60 + FAI_49 
+  F1 =~ FAI_81 + FAI_83 + FAI_49 + FAI_106 
 '
 
 fit <- lavaan:::cfa(

@@ -29,7 +29,6 @@ flag_careless_responding_LPA <- function(dat) {
   #   )
   # )
   
-  
   # Compute careless statistics indices.
   preds_mahad <- mahad(dat, plot = FALSE, flag = FALSE, confidence = 0.99)
   temp <- longstring(dat, avg = TRUE)
@@ -62,6 +61,11 @@ flag_careless_responding_LPA <- function(dat) {
   m6 <- d %>%
     scale() %>%
     estimate_profiles(6)
+  
+  by_subj_vals <- get_data(m6)
+  table(by_subj_vals$Class)
+  # 1   2   3   4   5   6 
+  # 22  95   2 233  20 122 
   
   get_estimates(m6) %>%
     as.data.frame()
@@ -144,7 +148,7 @@ flag_careless_responding_LPA <- function(dat) {
   
   by_subj_vals$index <- 1:nrow(dat)
   by_subj_vals$FLAG <- ifelse(
-    by_subj_vals$Class == 2 | by_subj_vals$Class == 5 | by_subj_vals$Class == 6, 
+    by_subj_vals$Class == 3 | by_subj_vals$Class == 5, 
     "delete", "keep"
   )
   

@@ -11,6 +11,9 @@ library("here")
 library("tidyverse")
 library("readxl")
 library("mice")
+library("miceadds") 
+library("missRanger")
+library("outliers") 
 library("careless")
 
 source(here::here("functions", "funs_flag_careless_responding.R"))
@@ -22,8 +25,6 @@ fai <- read_xlsx(here("data", "raw", "FAI_TOT_2020_corrected.xlsx"), col_names =
 
 # Demographic information.
 demo_info <- fai[, 1:50]
-
-
 
 # Items data.
 items <- fai[, 51:247]
@@ -54,6 +55,9 @@ items_reduced <- items |>
     )
   )
 
+
+# Multiple imputation with mice -------------------------------------------
+
 imputed_data <- mice(
   items_reduced, 
   m = 1, 
@@ -74,18 +78,38 @@ complete_data_corrected <- complete_data_corrected |>
 
 mydata <- complete_data_corrected
 
+
+# Imputation with missRanger ----------------------------------------------
+
+mydata <- missRanger(
+  items_reduced, 
+  pmm.k = 3, 
+  num.trees = 100, 
+  verbose = 0
+)
+summary(mydata)
+
+lapply(mydata, unique)
+
+table(mydata$FAI_1)
+
+nrow(mydata)
+# [1] 494
+
 mydata <- flag_careless_responding_LPA(mydata)
 
 dim(mydata)
 
-demo_info_clean <- recode_demo_information(demo_info)
+demo_info_clean <- recode_demo_info(demo_info)
 
 fai_df <- bind_cols(demo_info_clean, mydata)
+
+table(fai_df$FLAG)
 
 
 saveRDS(
   fai_df, 
-  here("data", "processed", "fai_2022_11_20.rds")
+  here("data", "processed", "fai_2024_10_23.rds")
 )
 
 

@@ -1,0 +1,8 @@
+name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
+clean_data|function|e18b12ba6a03c9af|||||||||||||||
+fai_clean|stem|4ae18572155be5e6|d9c15b1345f7c9a3|8f5a05c8d9869785|724803652||t20061.8071529624s|0ad10c1044726d83|21964|rds|local|vector|||0.121||
+fai_clean_complete|stem|855bfd1a4a2ad023|13fdccf80698f773|125c7ae0f2b5e45c|-905766311||t20061.8072715283s|74d7d22449ffed4a|10116|rds|local|vector|||10.239||
+fai_raw|stem|d788a03c0199252c|14c0abc3329ce191|c9ba13bf1a93fae4|477364418||t20061.8071514663s|add73d6bd1391156|20107|rds|local|vector|||0.051||
+file|stem|edf7a2816af7c0f3|32c9d994b29b014f|2c530c1562a7fbd1|1735323524|/Users/corradocaudek/_repositories/meyer_fai/data/raw/redcap/FAIv10_Cleaned.csv|t20061.4482319136s|1cd39d945310fea5|79139|file|local|vector|||0||
+get_data|function|2c4d665a5be31dfb|||||||||||||||
+impute_data|function|3304161183296ec2|||||||||||||||
