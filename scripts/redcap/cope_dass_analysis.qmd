@@ -1,0 +1,273 @@
+---
+title: "Development and validation of the FAI scale"
+subtitle: "Measuring the psychological vulerabilities of family caregivers of children with chronic diseases"
+author: Corrado Caudek 
+date: today
+format:
+  html:
+    embed-resources: true
+    standalone: true
+    toc: true
+    code-fold: show
+    code-copy: true
+    code-line-numbers: true
+editor_options: 
+  chunk_output_type: console
+bibliography: refs.bib
+execute:
+  warning: false
+  echo: true
+---
+
+## Background
+
+This study aims to develop a psychological scale to differentiate between family caregivers of children with chronic illnesses based on their coping abilities. This scale will be used to identify caregivers who may benefit from additional support or interventions.
+
+## Constructive Validity
+
+This data analysis può essere considerata come un'analisi di validità costruttiva, che include sia aspetti convergenti che divergenti. L'obiettivo è vedere se le dimensioni del FAI si comportano come previsto in relazione alle dimensioni del COPE e del DASS-21.
+
+## Packages and Options
+
+```{r}
+# Load packages
+suppressPackageStartupMessages({
+  library(here)
+  library(lavaan)
+})
+
+# Disable significance stars globally
+options(show.signif.stars = FALSE)
+```
+
+
+## Import the Data
+
+```{r}
+# Import RedCap data for the second administration of FAI -----------------
+
+setwd("~/_repositories/meyer_fai/scripts/redcap")
+
+# This will load the necessary libreries
+source(here::here("scripts", "redcap", "_targets.R"))
+
+# Read cleaned RedCap data
+temp <- tar_read(fai_clean_complete)
+# Some cases are empty and will be ignored: 12 18 76 81 152 182 193 202
+temp1 <- temp[-c(12, 18, 76, 81, 152, 182, 193, 202), ]
+# Remove outlier found with the performance package
+fai_clean_complete <- temp1[-92, ]
+rm(temp, temp1)
+
+fai <- fai_clean_complete |> 
+  dplyr::select(
+    fai_child_charact, fai_caregiving, fai_cure, fai_intrapsych, 
+    fai_support, fai_hyper,
+    cope_sc1, cope_sc2, cope_sc3, cope_sc4, cope_sc5,
+    dass_de_sc, dass_ax_sc, dass_str_sc
+  ) |> 
+  dplyr::rename(
+    fai_child_char = fai_child_charact,
+    fai_caregiving = fai_caregiving,
+    fai_percz_cure = fai_cure,
+    fai_intra_psyc = fai_intrapsych,
+    fai_soc_fam_sp = fai_support,
+    fai_hyper_prot = fai_hyper,
+    cope_soc_supp = cope_sc1,
+    cope_evit_str = cope_sc2,
+    cope_posi_att = cope_sc3,
+    cope_prob_ori = cope_sc4,
+    cope_tran_ori = cope_sc5,
+    dass_de = dass_de_sc,
+    dass_ax = dass_ax_sc,
+    dass_st = dass_str_sc
+  )
+```
+
+Descriptive statistics:
+
+```{r}
+psych::describe(fai)
+```
+
+Correlazions:
+
+```{r}
+cor(fai) |> round(2)
+```
+
+## Principal Component Analysis (PCA)
+
+### COPE
+
+```{r}
+e_fai <- eigen(cov(
+  cbind(
+    fai$cope_soc_supp, fai$cope_evit_str, fai$cope_posi_att,
+    fai$cope_prob_ori, fai$cope_tran_ori
+    )
+  )
+)
+e_fai$values / sum(e_fai$values)
+```
+
+```{r}
+cope_data <- fai[, c(
+  "cope_soc_supp", "cope_evit_str", "cope_posi_att","cope_prob_ori",
+  "cope_tran_ori")]
+pca_cope <- prcomp(cope_data, scale. = TRUE)
+pca_cope
+```
+
+Estrarre i punteggi delle prime 2 componenti principali:
+
+```{r}
+fai$COPE_PC1 <- pca_cope$x[, 1]
+fai$COPE_PC2 <- pca_cope$x[, 2]
+```
+
+### DASS-21
+
+```{r}
+e_dass <- eigen(cov(cbind(fai$dass_de, fai$dass_ax, fai$dass_st)))
+e_dass$values / sum(e_dass$values)
+```
+
+PCA
+
+```{r}
+dass_data <- fai[, c("dass_de", "dass_ax", "dass_st"), ]
+pca_dass <- prcomp(dass_data, scale. = TRUE)
+pca_dass
+```
+
+Extract scores of PC1:
+
+```{r}
+fai$DASS_PC1 <- pca_dass$x[, 1]
+```
+
+#### Results
+
+1. **COPE Dimensions:**
+   - **COPE_PC1 (57.3% variance explained):** Represents a general dimension of positive coping, with high loadings on **social support**, **positive attitude**, and **problem orientation**.
+   - **COPE_PC2 (16.5% variance explained):** Reflects a mix of avoidant and transcendent coping strategies, with high loadings on **avoidance strategies** and **transcendent orientation**.
+   
+2. **DASS Dimensions:**
+   - **DASS_PC1 (86.7% variance explained):** Represents overall psychological distress, with balanced contributions from **depression**, **anxiety**, and **stress**.
+   - Higher-order components, **DASS_PC2** and **DASS_PC3**, explain minimal variance (7.4% and 5.9%, respectively) and were not considered for the MANOVA due to their limited relevance.
+
+### Multivariate Analysis of Variance
+
+We conducted a MANOVA to investigate the multivariate effects of COPE_PC1 (positive coping), COPE_PC2 (avoidant/transcendent coping), and DASS_PC1 (distress) on six dimensions of the Family Adjustment Inventory (FAI): child characteristics, caregiving demands, perception of formal care, intrapsychic factors, social support/family functioning, and hyper-protectiveness.
+
+```{r}
+manova_fit <- manova(
+  cbind(
+    fai_child_char, fai_caregiving, fai_percz_cure,
+    fai_intra_psyc, fai_soc_fam_sp, fai_hyper_prot
+  ) ~ COPE_PC1 + COPE_PC2 + DASS_PC1,
+  data = fai
+)
+```
+
+```{r}
+summary(manova_fit)
+```
+
+#### Results 
+
+The MANOVA revealed the following effects on the combined six dimensions of the FAI:
+
+| Predictor   | Pillai's Trace | F (approx) | df (num) | df (den) | p-value   |
+|-------------|----------------|------------|----------|----------|-----------|
+| **COPE_PC1** | 0.134         | 5.04       | 6        | 195      | < 0.001  |
+| **COPE_PC2** | 0.064         | 2.24       | 6        | 195      | 0.041    |
+| **DASS_PC1** | 0.126         | 4.67       | 6        | 195      | < 0.001  |
+
+- **COPE_PC1** (positive coping) and **DASS_PC1** (distress) had significant multivariate effects across the FAI dimensions, indicating that these factors strongly influence family adjustment.
+- **COPE_PC2** (avoidant/transcendent coping) demonstrated a weaker but significant effect, suggesting that certain avoidant or transcendent strategies might play a role in family dynamics.
+
+---
+
+#### **Interpretation**
+1. **COPE_PC1 (Positive Coping):**
+   - Positive coping strategies (e.g., problem orientation, positive attitude, and social support) are associated with better family adjustment across multiple dimensions. This finding highlights the importance of fostering adaptive coping mechanisms in families facing challenging caregiving scenarios.
+
+2. **COPE_PC2 (Avoidant/Transcendent Coping):**
+   - Avoidant and transcendent strategies had a more limited effect. These strategies may help families manage some aspects of stress but could lack the effectiveness of problem-focused strategies in addressing the demands of caregiving.
+
+3. **DASS_PC1 (Distress):**
+   - Psychological distress was strongly associated with difficulties in family adjustment. This suggests that higher levels of stress, anxiety, and depression contribute to challenges across all six FAI dimensions, underlining the need for targeted psychological support.
+
+---
+
+#### **Conclusions**
+The results emphasize the dual importance of reducing psychological distress (DASS_PC1) and promoting adaptive coping strategies (COPE_PC1) to enhance family adjustment. These findings suggest that clinical interventions should aim to strengthen problem-focused coping while addressing the emotional and psychological burdens of caregivers.
+
+#### **Future Directions**
+Post-hoc univariate analyses will be conducted to determine which specific FAI dimensions are most affected by the predictors, providing additional insights into targeted intervention strategies. Interactions between predictors (e.g., COPE_PC1 × DASS_PC1) may also be explored to examine whether positive coping moderates the impact of psychological distress.
+
+## Modeling interactions
+
+Testing whether the effect of COPE_PC1 (positive coping) is moderated by DASS_PC1 (psychological distress). This would test the hypothesis that positive coping attenuates the impact of psychological distress.
+
+```{r}
+manova_fit_inter <- manova(
+  cbind(
+    fai_child_char, fai_caregiving, fai_percz_cure,
+    fai_intra_psyc, fai_soc_fam_sp, fai_hyper_prot
+  ) ~
+    COPE_PC1 * DASS_PC1 + COPE_PC2,
+  data = fai
+)
+summary(manova_fit_inter)
+```
+
+```{r}
+# Fit a separate linear model for a specific dimension
+lm_fai_intra_psyc <- lm(
+  fai_intra_psyc ~ COPE_PC1 * DASS_PC1 + COPE_PC2, 
+  data = fai
+)
+
+# Summary to check interaction significance
+summary(lm_fai_intra_psyc)
+```
+
+```{r}
+# Create a grid of values for COPE_PC1 and DASS_PC1
+cope_pc1_seq <- seq(min(fai$COPE_PC1), max(fai$COPE_PC1), length.out = 100)
+dass_pc1_seq <- seq(min(fai$DASS_PC1), max(fai$DASS_PC1), length.out = 100)
+
+# Create grid
+grid <- expand.grid(COPE_PC1 = cope_pc1_seq, DASS_PC1 = dass_pc1_seq)
+
+# Use the mean value of COPE_PC2 for predictions
+grid$COPE_PC2 <- mean(fai$COPE_PC2)
+
+# Predict using the fitted model
+grid$Predicted <- predict(lm_fai_intra_psyc, newdata = grid)
+
+# Predict using the fitted model
+grid$Predicted <- predict(lm_fai_intra_psyc, newdata = grid)
+```
+
+```{r}
+ggplot(grid, aes(x = COPE_PC1, y = DASS_PC1, fill = Predicted)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  labs(
+    title = "Interaction Between COPE_PC1 and DASS_PC1",
+    x = "COPE_PC1 (Positive Coping)",
+    y = "DASS_PC1 (Distress)",
+    fill = "Predicted FAI Outcome"
+  )
+```
+
+The interaction between COPE_PC1 and DASS_PC1 highlights the buffering effect of positive coping strategies on family adjustment outcomes. Specifically, families with higher levels of positive coping (COPE_PC1) demonstrated resilience to psychological distress (DASS_PC1), maintaining better adjustment outcomes even under high distress conditions. Conversely, families with low positive coping and high distress exhibited significantly poorer outcomes, suggesting a synergistic impact of low coping resources and high distress on family functioning. 
+
+## Bibliography
+
+
+

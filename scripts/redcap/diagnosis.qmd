@@ -1,0 +1,552 @@
+---
+title: "Development and validation of the FAI scale"
+subtitle: "Diagnosis Category as Criterion Variable"
+author: Corrado Caudek 
+date: today
+format:
+  html:
+    embed-resources: true
+    standalone: true
+    toc: true
+    code-fold: show
+    code-copy: true
+    code-line-numbers: true
+editor_options: 
+  chunk_output_type: console
+bibliography: refs.bib
+execute:
+  warning: false
+  echo: true
+---
+
+## Background
+
+This study aims to develop a psychological scale to differentiate between family caregivers of children with chronic illnesses based on their coping abilities. This scale will be used to identify caregivers who may benefit from additional support or interventions.
+
+## Objective
+
+In this analysis, the diagnosis category (i.e., Lieve, Grave, Moderata, Molto grave) will be used as the criterion variable in a predictive model. The purpose is to evaluate the classification ability of the FAI scales. 
+
+## Load packages and options
+
+```{r}
+if (!requireNamespace("pacman")) install.packages("pacman")
+
+pacman::p_load(
+  here, tidyverse, TAM, mirt, lavaan, mokken, psych, semTools, 
+  ids, pROC, nnet, caret, ROSE, DMwR, recipes, themis, randomForest
+)
+
+# Disable significance stars globally
+options(show.signif.stars = FALSE)
+```
+
+## Import the Data
+
+```{r}
+# Import RedCap data ------------------------------------------------------
+
+setwd("~/_repositories/meyer_fai/scripts/redcap")
+
+# This will load the necessary libreries
+source(here::here("scripts", "redcap", "_targets.R"))
+
+# Read cleaned RedCap data
+temp <- tar_read(fai_clean_complete)
+# Some cases are empty and will be ignored: 12 18 76 81 152 182 193 202
+temp1 <- temp[-c(12, 18, 76, 81, 152, 182, 193, 202), ]
+# Remove outlier found with the performance package
+fai_clean_complete <- temp1[-92, ]
+rm(temp, temp1)
+
+fai <- fai_clean_complete |> 
+  dplyr::select(
+    fai_child_charact, fai_caregiving, fai_cure, fai_intrapsych, 
+    fai_support, fai_hyper, quanti_fratelli, sesso, nome_malattia,
+    eta_pz, legge_104
+  ) |> 
+   dplyr::rename(
+     fai_child_char = fai_child_charact,
+     fai_caregiving = fai_caregiving,
+     fai_percz_cure = fai_cure,
+     fai_intra_psyc = fai_intrapsych,
+     fai_soc_fam_sp = fai_support,
+     fai_hyper_prot = fai_hyper
+     #eta_madre = erta_madre
+   ) 
+```
+
+Determine severity level:
+
+```{r}
+fai <- fai |> 
+  mutate(
+    nome_malattia_raggruppato = case_when(
+      # Molto grave: malattie con alto rischio di morte o che 
+      # richiedono trattamenti intensivi
+      nome_malattia %in% c(
+        "glioma", "LLA", "linfoma anaplastico", "Leucemia mieloide", 
+        "fibrosi cistica", "Pinealoblastoma", 
+        "tumore glioneurale leptomeningeale diffuso"
+        ) ~ "Molto grave",
+      
+      # Grave: malattie croniche, con impatto significativo sulla 
+      # qualità della vita
+      nome_malattia %in% c(
+        "Epilessia", "sindrome di charge", "Distrofia muscolare",
+        "Neurofibromatosi", "diabete di tipo 1", "artrite romatoide",
+        "RCU", "emofilia"
+        ) ~ "Grave",
+      
+      # Moderata: malattie con impatto moderato, trattabili ma non 
+      # trascurabili
+      nome_malattia %in% c(
+        "asma", "Emicrania", "dermatite atopica", "ipospadia", 
+        "ipotonia muscolare", "Blefaro chetato congiuntivite"
+        ) ~ "Moderata",
+      
+      # Lieve: condizioni gestibili con trattamenti standard e 
+      # basso impatto funzionale
+      TRUE ~ "Lieve"
+    )
+  )
+
+fai$nome_malattia_raggruppato <- factor(fai$nome_malattia_raggruppato)
+fai$nome_malattia_raggruppato <- 
+  relevel(fai$nome_malattia_raggruppato, ref = "Lieve")
+
+fai$nome_malattia <- NULL
+```
+
+```{r}
+table(fai$nome_malattia_raggruppato)
+```
+
+## Address Class Imbalance
+
+Given the imbalance in severity levels, apply techniques to ensure the model learns effectively from minority classes.
+
+Oversampling with Recipes
+Use recipes to balance the dataset by oversampling:
+
+```{r}
+set.seed(123)
+
+# Create an upsampling recipe
+recipe_obj <- recipe(nome_malattia_raggruppato ~ ., data = fai) %>%
+  step_upsample(nome_malattia_raggruppato, over_ratio = 1)
+
+# Prepare balanced data
+balanced_fai <- prep(recipe_obj) %>% juice()
+table(balanced_fai$nome_malattia_raggruppato)
+```
+
+
+### Build Models
+(a) Multinomial Logistic Regression
+This model is interpretable and works well for multiclass classification.
+
+```{r}
+# Fit multinomial logistic regression
+set.seed(123)
+fm <- multinom(
+  nome_malattia_raggruppato ~ fai_child_char + fai_caregiving + 
+    fai_percz_cure + 
+    fai_intra_psyc + fai_soc_fam_sp + fai_hyper_prot + sesso + eta_pz + 
+    quanti_fratelli + legge_104,
+  data = balanced_fai
+)
+
+# Model summary
+summary(fm)
+```
+
+
+### Fit Random Forest
+
+```{r}
+set.seed(123)
+rf_model <- randomForest(
+  nome_malattia_raggruppato ~ fai_child_char + fai_caregiving + 
+    fai_percz_cure + 
+    fai_intra_psyc + fai_soc_fam_sp + fai_hyper_prot + sesso + 
+    eta_pz + 
+    quanti_fratelli + legge_104,
+  data = balanced_fai,
+  ntree = 500,
+  importance = TRUE
+)
+
+# Variable importance
+varImpPlot(rf_model)
+```
+
+### XGBoost
+
+```{r}
+library(xgboost)
+
+# Prepare data for XGBoost
+train_matrix <- model.matrix(nome_malattia_raggruppato ~ ., data = balanced_fai)[, -1]
+train_labels <- as.numeric(balanced_fai$nome_malattia_raggruppato) - 1
+
+# Fit XGBoost
+set.seed(123)
+xgb_model <- xgboost(
+  data = as.matrix(train_matrix),
+  label = train_labels,
+  objective = "multi:softmax",
+  num_class = length(unique(fai$nome_malattia_raggruppato)),
+  nrounds = 100,
+  eta = 0.3,
+  max_depth = 6,
+  eval_metric = "mlogloss"
+)
+```
+
+
+### Evaluate Model Performance
+Predictions on Test Data
+Use stratified train-test splitting to ensure balanced evaluation:
+
+```{r}
+# Create train-test split
+set.seed(123)
+train_index <- createDataPartition(
+  fai$nome_malattia_raggruppato, p = 0.7, list = FALSE)
+train <- fai[train_index, ]
+test <- fai[-train_index, ]
+
+# Predict and evaluate for Random Forest
+test_predictions_rf <- predict(rf_model, newdata = test)
+conf_matrix_rf <- confusionMatrix(
+  data = test_predictions_rf,
+  reference = test$nome_malattia_raggruppato
+)
+print(conf_matrix_rf)
+```
+
+Metrics:
+
+- Accuracy: Percentage of correct predictions.
+- Precision, Recall, F1-score: Assess performance for each class.
+- Confusion Matrix: Evaluate class-specific performance.
+
+```{r}
+conf_matrix_rf$byClass  # Class-specific metrics
+conf_matrix_rf$overall  # Overall metrics
+```
+
+### Cross-Validation
+
+Use cross-validation to ensure robustness:
+
+```{r}
+set.seed(123)
+train_control <- trainControl(method = "cv", number = 10)
+
+# Train Random Forest with cross-validation
+cv_model <- train(
+  nome_malattia_raggruppato ~ ., 
+  data = fai,
+  method = "rf", 
+  trControl = train_control
+)
+print(cv_model)
+```
+
+
+## Bibliography
+
+
+
+```{r}
+# Create the severity variable based on `nome_malattia`
+fai_clean_complete <- fai_clean_complete %>%
+  mutate(
+    nome_malattia_raggruppato = case_when(
+      # Molto grave: severe conditions with high mortality risk
+      nome_malattia %in% c(
+        "glioma", "LLA", "linfoma anaplastico", "Leucemia mieloide", 
+        "fibrosi cistica", "Pinealoblastoma", 
+        "tumore glioneurale leptomeningeale diffuso"
+      ) ~ "Molto grave",
+      
+      # Grave: chronic illnesses significantly impacting quality of life
+      nome_malattia %in% c(
+        "Epilessia", "sindrome di charge", "Distrofia muscolare",
+        "Neurofibromatosi", "diabete di tipo 1", "artrite romatoide",
+        "RCU", "emofilia"
+      ) ~ "Grave",
+      
+      # Moderata: moderate conditions that are treatable but impactful
+      nome_malattia %in% c(
+        "asma", "Emicrania", "dermatite atopica", "ipospadia", 
+        "ipotonia muscolare", "Blefaro chetato congiuntivite"
+      ) ~ "Moderata",
+      
+      # Lieve: mild conditions manageable with standard treatments
+      TRUE ~ "Lieve"
+    )
+  ) %>%
+  mutate(
+    nome_malattia_raggruppato = factor(nome_malattia_raggruppato, levels = c("Lieve", "Moderata", "Grave", "Molto grave"))
+  ) %>%
+  dplyr::select(-nome_malattia)  # Remove the original disease name variable
+
+```
+
+```{r}
+table(fai_clean_complete$nome_malattia_raggruppato)
+```
+
+```{r}
+fai_clean_complete <- fai_clean_complete %>%
+  mutate(across(starts_with("fai"), scale))
+```
+
+```{r}
+library(recipes)
+
+set.seed(123)
+# Upsampling recipe
+recipe_obj <- recipe(
+  nome_malattia_raggruppato ~ ., data = fai_clean_complete) %>%
+  step_upsample(nome_malattia_raggruppato, over_ratio = 1)  # Balance classes
+
+# Prepare the balanced dataset
+balanced_data <- prep(recipe_obj) %>% juice()
+table(balanced_data$nome_malattia_raggruppato)
+```
+
+```{r}
+set.seed(123)
+train_index <- createDataPartition(
+  balanced_data$nome_malattia_raggruppato, p = 0.7, list = FALSE)
+train_data <- balanced_data[train_index, ]
+test_data <- balanced_data[-train_index, ]
+```
+
+```{r}
+# Fit multinomial logistic regression
+multinom_model <- multinom(
+  nome_malattia_raggruppato ~ fai_child_charact + fai_caregiving + 
+    fai_cure + fai_intrapsych + fai_support + fai_hyper + 
+    sesso + eta_pz + quanti_fratelli + legge_104,
+  data = train_data
+)
+
+# Model summary
+summary(multinom_model)
+```
+
+```{r}
+# Fit Random Forest
+rf_model <- randomForest(
+  nome_malattia_raggruppato ~ 
+    fai_child_charact + fai_caregiving + 
+    fai_cure + fai_intrapsych + fai_support + sesso + eta_pz + 
+    quanti_fratelli + legge_104,
+  data = train_data,
+  ntree = 500,
+  importance = TRUE
+)
+
+# Variable importance
+varImpPlot(rf_model)
+```
+
+```{r}
+# Predict using Random Forest
+test_predictions_rf <- predict(rf_model, newdata = test_data)
+
+# Evaluate performance
+conf_matrix <- confusionMatrix(
+  data = test_predictions_rf,
+  reference = test_data$nome_malattia_raggruppato
+)
+print(conf_matrix)
+```
+
+```{r}
+conf_matrix$byClass  # Sensitivity, specificity, and F1-score for each class
+```
+
+```{r}
+# Standardize numeric predictors
+fai_clean_complete <- fai_clean_complete %>%
+  mutate(across(
+    starts_with("fai"), 
+    scale, 
+    .names = "scaled_{.col}"
+  ))
+```
+
+
+```{r}
+# Create interaction terms
+fai_clean_complete <- fai_clean_complete %>%
+  mutate(
+    fai_hyper_sesso = scaled_fai_hyper * as.numeric(sesso == "female"),
+    fai_caregiving_age = scaled_fai_caregiving * eta_pz
+  )
+```
+
+```{r}
+table(fai_clean_complete$nome_malattia_raggruppato)
+```
+
+```{r}
+set.seed(123)
+train_index <- createDataPartition(
+  fai_clean_complete$nome_malattia_raggruppato, p = 0.7, list = FALSE)
+train_data <- fai_clean_complete[train_index, ]
+test_data <- fai_clean_complete[-train_index, ]
+```
+
+```{r}
+set.seed(123)
+rf_model <- randomForest(
+  nome_malattia_raggruppato ~ scaled_fai_child_charact + 
+    scaled_fai_caregiving + 
+    scaled_fai_cure + scaled_fai_intrapsych + scaled_fai_support + 
+    scaled_fai_hyper + fai_hyper_sesso + fai_caregiving_age + eta_pz + sesso, 
+  data = train_data,
+  ntree = 500,
+  importance = TRUE
+)
+
+# Variable importance
+varImpPlot(rf_model)
+```
+
+```{r}
+# Prepare data for XGBoost
+train_matrix <- model.matrix(
+  nome_malattia_raggruppato ~ . -1, data = train_data)
+train_labels <- as.numeric(train_data$nome_malattia_raggruppato) - 1
+
+set.seed(123)
+xgb_model <- xgboost(
+  data = train_matrix,
+  label = train_labels,
+  objective = "multi:softmax",
+  num_class = length(unique(train_data$nome_malattia_raggruppato)),
+  eval_metric = "mlogloss",
+  nrounds = 100,
+  eta = 0.3,
+  max_depth = 6
+)
+```
+
+```{r}
+# Random Forest predictions
+rf_preds <- predict(rf_model, newdata = test_data)
+
+# XGBoost predictions
+test_matrix <- model.matrix(nome_malattia_raggruppato ~ . -1, data = test_data)
+xgb_preds <- predict(xgb_model, newdata = test_matrix)
+xgb_preds <- as.factor(levels(train_data$nome_malattia_raggruppato)[xgb_preds + 1])
+
+# Ensemble predictions (majority vote)
+ensemble_preds <- apply(cbind(rf_preds, xgb_preds), 1, function(x) {
+  names(which.max(table(x)))
+})
+```
+
+```{r}
+# Confusion matrix
+conf_matrix <- confusionMatrix(
+  data = factor(ensemble_preds, levels = levels(test_data$nome_malattia_raggruppato)),
+  reference = test_data$nome_malattia_raggruppato
+)
+
+print(conf_matrix)
+```
+
+```{r}
+# Fit ordinal logistic regression
+ord_model <- polr(
+  nome_malattia_raggruppato ~ 
+    scaled_fai_child_charact + 
+    scaled_fai_caregiving + 
+    scaled_fai_cure + scaled_fai_intrapsych + 
+    scaled_fai_support + 
+    scaled_fai_hyper 
+  ,
+  data = fai_clean_complete,
+  method = "logistic"
+)
+
+# Summarize the model
+summary(ord_model)
+```
+
+###################
+
+```{r}
+library(dplyr)
+library(cmdstanr)
+
+# Dati di esempio
+set.seed(123)
+N <- 100  # Numero di osservazioni
+K <- 4    # Numero di categorie
+data <- data.frame(
+  X1 = rnorm(N),
+  X2 = rnorm(N),
+  y = sample(1:K, N, replace = TRUE, prob = c(0.7, 0.2, 0.08, 0.02)) # sbilanciati
+)
+
+# Calcolo dei pesi inversi
+class_weights <- data %>%
+  count(y) %>%
+  mutate(weight = 1 / n)
+
+# Unione dei pesi ai dati
+data <- data %>%
+  left_join(class_weights, by = "y") %>%
+  rename(weight = weight)
+
+# Preparare i dati per Stan
+stan_data <- list(
+  N = nrow(data),
+  K = K,
+  P = 2,  # Numero di covariate
+  X = as.matrix(data[, c("X1", "X2")]),
+  y = data$y,
+  weights = data$weight
+)
+```
+
+
+```{r}
+# Specificare il percorso al file Stan
+model_file <- here::here("scripts", "redcap", "multinom_logistic_reg.stan")
+
+# Compilare il modello
+model <- cmdstan_model(model_file)
+
+# Run the model
+fit <- model$sample(
+  data = stan_data,
+  seed = 123,
+  chains = 4,
+  iter_sampling = 2000,
+  iter_warmup = 1000
+)
+```
+
+```{r}
+library(posterior)
+
+# Extract posterior draws
+posterior_draws <- as_draws_df(fit$draws())
+
+# View parameter summaries
+summary_draws <- summarise_draws(posterior_draws)
+print(summary_draws)
+
+```
+
+

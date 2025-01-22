@@ -1,1 +1,0 @@
-Variable	Negative	1	2	3	3	Zeroto2	Threeto4	missing
