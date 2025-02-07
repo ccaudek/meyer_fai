@@ -1,0 +1,2056 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.40">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>FAI Item Selection</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="item_selection_files/libs/clipboard/clipboard.min.js"></script>
+<script src="item_selection_files/libs/quarto-html/quarto.js"></script>
+<script src="item_selection_files/libs/quarto-html/popper.min.js"></script>
+<script src="item_selection_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="item_selection_files/libs/quarto-html/anchor.min.js"></script>
+<link href="item_selection_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="item_selection_files/libs/quarto-html/quarto-syntax-highlighting-549806ee2085284f45b00abea8c6df48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="item_selection_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="item_selection_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="item_selection_files/libs/bootstrap/bootstrap-973236bd072d72a04ee9cd82dcc9cb29.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">FAI Item Selection</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressPackageStartupMessages</span>({</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(<span class="st">"tidyverse"</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(<span class="st">"TAM"</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(<span class="st">"psych"</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(<span class="st">"lordif"</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(<span class="st">"ggridges"</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(<span class="st">"ggpubr"</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(<span class="st">"paletteer"</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(<span class="st">"readxl"</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(<span class="st">"mice"</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(<span class="st">"VIM"</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(<span class="st">"paran"</span>)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(<span class="st">"lavaan"</span>)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(<span class="st">"polycor"</span>) <span class="co"># for hetcor()</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(<span class="st">"multilevel"</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(<span class="st">"miceRanger"</span>)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(<span class="st">"papaja"</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_set</span>(<span class="fu">theme_apa</span>())</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(<span class="st">"outForest"</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(<span class="st">"lavaanExtra"</span>)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Caricare le librerie necessarie</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(glmnet) <span class="co"># Per LASSO regression</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(randomForest) <span class="co"># Per valutare importanza delle variabili</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(Boruta) <span class="co"># Per selezione robusta delle variabili</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(missRanger)</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(caret)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(pROC)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(lavaan)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(semTools)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"here"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>here() starts at /Users/corrado/_repositories/meyer_fai</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Increase max print</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">max.print =</span> .Machine<span class="sc">$</span>integer.max)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"functions"</span>, <span class="st">"fai_funs.R"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="import-data" class="level2">
+<h2 class="anchored" data-anchor-id="import-data">Import data</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>fai_s <span class="ot">&lt;-</span> <span class="fu">read_xlsx</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"raw"</span>, <span class="st">"FAI_TOT_2020_corrected.xlsx"</span>), <span class="at">col_names =</span> <span class="cn">TRUE</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Demographic information.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>demo_info <span class="ot">&lt;-</span> <span class="fu">recode_demo_info</span>(fai_s)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Categorize disease severity.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Function to categorize disease severity</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>categorize_severity <span class="ot">&lt;-</span> <span class="cf">function</span>(disease) {</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  disease <span class="ot">&lt;-</span> <span class="fu">tolower</span>(disease) <span class="co"># Normalize text (case insensitive)</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">grepl</span>(<span class="st">"allergia|asma lieve|rinite"</span>, disease)) {</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="st">"Lieve"</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (<span class="fu">grepl</span>(<span class="st">"diabete|colite ulcerosa|artrite|cardiopatia|insufficienza renale|ipertensione"</span>, disease)) {</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="st">"Moderata"</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (<span class="fu">grepl</span>(<span class="st">"fibrosi cistica|leucemia|epilessia|distrofia|sindrome nefrosica|osteosarcoma|sarcoma|neuroblastoma"</span>, disease)) {</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="st">"Grave"</span>)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (<span class="fu">grepl</span>(<span class="st">"tumore|cancro|metastasi|cuore ipoplasico|malattia metabolica|aciduria|encefalopatia"</span>, disease)) {</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="st">"Critica"</span>)</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NA</span>) <span class="co"># Unclassified</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply the function to categorize chronic diseases</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>demo_info <span class="ot">&lt;-</span> demo_info <span class="sc">%&gt;%</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">severity_level =</span> <span class="fu">factor</span>(</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sapply</span>(chronic_disease, categorize_severity),</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"Moderata"</span>, <span class="st">"Lieve"</span>, <span class="st">"Grave"</span>, <span class="st">"Critica"</span>),</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">ordered =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify transformation</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="co"># table(demo_info$severity_level, demo_info$death_risk)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>In the original administration, there is no psychological criterion variable available. The only external variable that could serve as a criterion is death risk, based on the assumption that coping is more challenging for a life-threatening disease compared to a non-life-threatening condition.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(demo_info<span class="sc">$</span>death_risk)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+  0   1 
+264 230 </code></pre>
+</div>
+</div>
+</section>
+<section id="data-wrangling" class="level2">
+<h2 class="anchored" data-anchor-id="data-wrangling">Data Wrangling</h2>
+<p>Extract item responses (columns 51 to 247).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>items <span class="ot">&lt;-</span> fai_s[, <span class="dv">51</span><span class="sc">:</span><span class="dv">247</span>]</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(items) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"item_"</span>, <span class="fu">seq_len</span>(<span class="fu">ncol</span>(items))) <span class="co"># Rename items</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Identify and remove items with excessive missing values.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>n_nas <span class="ot">&lt;-</span> <span class="fu">colSums</span>(<span class="fu">is.na</span>(items))</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>bad_items <span class="ot">&lt;-</span> <span class="fu">names</span>(n_nas[n_nas <span class="sc">&gt;</span> <span class="dv">50</span>])  <span class="co"># Adjust threshold as needed</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>items_filtered <span class="ot">&lt;-</span> items <span class="sc">%&gt;%</span> </span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span><span class="fu">all_of</span>(bad_items))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Combine cleaned item data with demographic info.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>mydata <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(demo_info, items_filtered) <span class="sc">%&gt;%</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">subj_id =</span> <span class="fu">as.factor</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(.))))  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="identify-and-remove-problematic-participants" class="level2">
+<h2 class="anchored" data-anchor-id="identify-and-remove-problematic-participants">Identify and Remove Problematic Participants</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>d_num <span class="ot">&lt;-</span> mydata <span class="sc">%&gt;%</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="fu">starts_with</span>(<span class="st">"item_"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="fu">where</span>(is.numeric))  <span class="co"># Ensure numeric selection</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Mahalanobis Distance</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>mahal_out <span class="ot">&lt;-</span> careless<span class="sc">::</span><span class="fu">mahad</span>(d_num)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="item_selection_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>mahal_cutoff <span class="ot">&lt;-</span> <span class="fu">boxplot</span>(mahal_out, <span class="at">plot =</span> <span class="cn">FALSE</span>)<span class="sc">$</span>stats[<span class="dv">5</span>]</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>bad_mahal <span class="ot">&lt;-</span> mydata<span class="sc">$</span>subj_id[mahal_out <span class="sc">&gt;</span> mahal_cutoff]</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Longstring Analysis</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>longstring_out <span class="ot">&lt;-</span> careless<span class="sc">::</span><span class="fu">longstring</span>(d_num)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>longstring_cutoff <span class="ot">&lt;-</span> <span class="fu">boxplot</span>(longstring_out, <span class="at">plot =</span> <span class="cn">FALSE</span>)<span class="sc">$</span>stats[<span class="dv">5</span>]</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>bad_longstring <span class="ot">&lt;-</span> mydata<span class="sc">$</span>subj_id[longstring_out <span class="sc">&gt;</span> longstring_cutoff]</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="co"># IRV Analysis</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>irv_out <span class="ot">&lt;-</span> careless<span class="sc">::</span><span class="fu">irv</span>(d_num)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>irv_cutoff <span class="ot">&lt;-</span> <span class="fu">boxplot</span>(irv_out, <span class="at">plot =</span> <span class="cn">FALSE</span>)<span class="sc">$</span>stats[<span class="dv">5</span>]</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>bad_irv <span class="ot">&lt;-</span> mydata<span class="sc">$</span>subj_id[irv_out <span class="sc">&gt;</span> irv_cutoff]</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Person Total Correlation</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>cm <span class="ot">&lt;-</span> <span class="fu">colMeans</span>(d_num, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>person_tot_cor <span class="ot">&lt;-</span> <span class="fu">apply</span>(d_num, <span class="dv">1</span>, <span class="cf">function</span>(x) <span class="fu">cor</span>(x, cm, <span class="at">use =</span> <span class="st">"complete.obs"</span>))</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>person_tot_cutoff <span class="ot">&lt;-</span> <span class="fu">boxplot</span>(person_tot_cor, <span class="at">plot =</span> <span class="cn">FALSE</span>)<span class="sc">$</span>stats[<span class="dv">1</span>]</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>bad_person_tot <span class="ot">&lt;-</span> mydata<span class="sc">$</span>subj_id[person_tot_cor <span class="sc">&lt;</span> person_tot_cutoff]</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Combine all flagged participants</span></span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>bad_ids <span class="ot">&lt;-</span> <span class="fu">unique</span>(<span class="fu">c</span>(bad_mahal, bad_longstring, bad_irv, bad_person_tot))</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove problematic participants before imputation</span></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>d_clean <span class="ot">&lt;-</span> mydata <span class="sc">%&gt;%</span></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span>subj_id <span class="sc">%in%</span> bad_ids)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="multiple-imputation" class="level2">
+<h2 class="anchored" data-anchor-id="multiple-imputation">Multiple Imputation</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Select numeric item responses for imputation</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>items_clean <span class="ot">&lt;-</span> d_clean <span class="sc">%&gt;%</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="fu">starts_with</span>(<span class="st">"item_"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="fu">where</span>(is.numeric))</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Perform multiple imputation</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>imp <span class="ot">&lt;-</span> <span class="fu">missRanger</span>(items_clean, <span class="at">num.trees =</span> <span class="dv">100</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Ensure imputed values are within the original range and rounded to integers</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>imp <span class="ot">&lt;-</span> imp <span class="sc">%&gt;%</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), <span class="sc">~</span> <span class="fu">round</span>(<span class="fu">pmax</span>(<span class="fu">min</span>(., <span class="at">na.rm =</span> <span class="cn">TRUE</span>), </span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>                                           <span class="fu">pmin</span>(., <span class="fu">max</span>(., <span class="at">na.rm =</span> <span class="cn">TRUE</span>))), <span class="dv">0</span>)))</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract demographic data excluding items</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>demo_clean <span class="ot">&lt;-</span> d_clean <span class="sc">%&gt;%</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">"item_"</span>))</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Final cleaned dataset</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(imp, demo_clean)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 453 208</code></pre>
+</div>
+</div>
+</section>
+<section id="item-selection-based-on-clinical-criteria" class="level2">
+<h2 class="anchored" data-anchor-id="item-selection-based-on-clinical-criteria">Item Selection Based on Clinical Criteria</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define selected items based on clinical criteria</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>selected_items <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"i_86"</span>, <span class="st">"i_57"</span>, <span class="st">"i_5"</span>, <span class="st">"i_85"</span>, <span class="st">"i_81"</span>, </span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"i_105"</span>, <span class="st">"i_48"</span>, <span class="st">"i_133"</span>, <span class="st">"i_129"</span>, <span class="st">"i_39"</span>, <span class="st">"i_103"</span>, </span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"i_143"</span>, <span class="st">"i_79"</span>, </span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"i_111"</span>, <span class="st">"i_34"</span>, <span class="st">"i_119"</span>, <span class="st">"i_116"</span>, <span class="st">"i_23"</span>, <span class="st">"i_45"</span>, <span class="st">"i_41"</span>, </span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"i_186"</span>, <span class="st">"i_38"</span>, <span class="st">"i_128"</span>, <span class="st">"i_7"</span>, <span class="st">"i_16"</span>, <span class="st">"i_29"</span>, </span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"i_137"</span>, <span class="st">"i_96"</span>, <span class="st">"i_194"</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to match column names in `imp`</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>selected_items_corrected <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"item_"</span>, <span class="fu">sub</span>(<span class="st">"^i_"</span>, <span class="st">""</span>, selected_items))</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Ensure only existing columns are selected</span></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>selected_items_corrected <span class="ot">&lt;-</span> <span class="fu">intersect</span>(selected_items_corrected, <span class="fu">colnames</span>(imp))</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Select the matching columns</span></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>imp_selected <span class="ot">&lt;-</span> imp <span class="sc">%&gt;%</span> </span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="fu">any_of</span>(selected_items_corrected))</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Validate the selection</span></span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(selected_items_corrected) <span class="sc">!=</span> <span class="fu">length</span>(selected_items)) {</span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">warning</span>(<span class="st">"Some selected items were not found in the dataset."</span>)</span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">names</span>(imp_selected))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "item_86"  "item_57"  "item_5"   "item_85"  "item_81"  "item_105"
+ [7] "item_48"  "item_133" "item_129" "item_39"  "item_103" "item_143"
+[13] "item_79"  "item_111" "item_34"  "item_119" "item_116" "item_23" 
+[19] "item_45"  "item_41"  "item_186" "item_38"  "item_128" "item_7"  
+[25] "item_16"  "item_29"  "item_137" "item_96"  "item_194"</code></pre>
+</div>
+</div>
+<section id="define-target-matrix-for-factor-structure-29x6" class="level3">
+<h3 class="anchored" data-anchor-id="define-target-matrix-for-factor-structure-29x6">Define Target Matrix for Factor Structure (29x6)</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize a 29x6 matrix filled with zeros</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>TARGET <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow =</span> <span class="fu">length</span>(selected_items_corrected), <span class="at">ncol =</span> <span class="dv">6</span>)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Assign factor loadings based on clinical criteria</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>TARGET[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="dv">1</span>]  <span class="ot">&lt;-</span> <span class="dv">1</span>  <span class="co"># F1</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>TARGET[<span class="dv">6</span><span class="sc">:</span><span class="dv">11</span>, <span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="dv">1</span>  <span class="co"># F2</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>TARGET[<span class="dv">12</span><span class="sc">:</span><span class="dv">13</span>, <span class="dv">3</span>] <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="co"># F3</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>TARGET[<span class="dv">14</span><span class="sc">:</span><span class="dv">20</span>, <span class="dv">4</span>] <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="co"># F4</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>TARGET[<span class="dv">21</span><span class="sc">:</span><span class="dv">26</span>, <span class="dv">5</span>] <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="co"># F5</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>TARGET[<span class="dv">27</span><span class="sc">:</span><span class="dv">29</span>, <span class="dv">6</span>] <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="co"># F6</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Add row names for clarity</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(TARGET) <span class="ot">&lt;-</span> selected_items_corrected</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(TARGET) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"F"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>)</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the target rotation matrix</span></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(TARGET)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         F1 F2 F3 F4 F5 F6
+item_86   1  0  0  0  0  0
+item_57   1  0  0  0  0  0
+item_5    1  0  0  0  0  0
+item_85   1  0  0  0  0  0
+item_81   1  0  0  0  0  0
+item_105  0  1  0  0  0  0
+item_48   0  1  0  0  0  0
+item_133  0  1  0  0  0  0
+item_129  0  1  0  0  0  0
+item_39   0  1  0  0  0  0
+item_103  0  1  0  0  0  0
+item_143  0  0  1  0  0  0
+item_79   0  0  1  0  0  0
+item_111  0  0  0  1  0  0
+item_34   0  0  0  1  0  0
+item_119  0  0  0  1  0  0
+item_116  0  0  0  1  0  0
+item_23   0  0  0  1  0  0
+item_45   0  0  0  1  0  0
+item_41   0  0  0  1  0  0
+item_186  0  0  0  0  1  0
+item_38   0  0  0  0  1  0
+item_128  0  0  0  0  1  0
+item_7    0  0  0  0  1  0
+item_16   0  0  0  0  1  0
+item_29   0  0  0  0  1  0
+item_137  0  0  0  0  0  1
+item_96   0  0  0  0  0  1
+item_194  0  0  0  0  0  1</code></pre>
+</div>
+</div>
+</section>
+<section id="define-the-esem-model-in-lavaan-syntax" class="level3">
+<h3 class="anchored" data-anchor-id="define-the-esem-model-in-lavaan-syntax">Define the ESEM Model in Lavaan Syntax</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="st">'</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="st">    efa("efa1")*f1 +</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="st">    efa("efa1")*f2 +</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="st">    efa("efa1")*f3 +</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="st">    efa("efa1")*f4 +</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="st">    efa("efa1")*f5 +</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="st">    efa("efa1")*f6 =~ </span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="st">       # F1</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="st">       item_86 + item_57 + item_5 + item_85 + item_81 + </span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="st">       # F2</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a><span class="st">       item_105 + item_48 + item_133 + item_129 + item_39 + item_103 + </span></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="st">       # F3</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="st">       item_143 + item_79 + </span></span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a><span class="st">       # F4</span></span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a><span class="st">       item_111 + item_34 + item_119 + item_116 + item_23 + item_45 + item_41 + </span></span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a><span class="st">       # F5</span></span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a><span class="st">       item_186 + item_38 + item_128 + item_7 + item_16 + item_29 + </span></span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a><span class="st">       # F6</span></span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a><span class="st">       item_137 + item_96 + item_194</span></span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="fit-the-esem-model-with-target-rotation" class="level3">
+<h3 class="anchored" data-anchor-id="fit-the-esem-model-with-target-rotation">Fit the ESEM Model with Target Rotation</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>fit1 <span class="ot">&lt;-</span> <span class="fu">sem</span>(</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">model =</span> model,</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> imp_selected,  </span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">ordered =</span> <span class="cn">TRUE</span>,  <span class="co"># Use ordered estimation if Likert-type items</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">rotation =</span> <span class="st">"target"</span>,</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">rotation.args =</span> <span class="fu">list</span>(<span class="at">target =</span> TARGET)</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>fit_indices <span class="ot">&lt;-</span> <span class="fu">fitMeasures</span>(fit1, <span class="fu">c</span>(</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"chisq"</span>, <span class="st">"df"</span>, <span class="st">"pvalue"</span>, <span class="st">"cfi"</span>, <span class="st">"tli"</span>, <span class="st">"rmsea"</span>, <span class="st">"srmr"</span>,</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"chisq.scaled"</span>, <span class="st">"df.scaled"</span>, <span class="st">"pvalue.scaled"</span>, <span class="st">"cfi.robust"</span>, <span class="st">"tli.robust"</span>,</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"rmsea.robust"</span>, <span class="st">"srmr"</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Display selected fit indices (Standard &amp; Robust)</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">Model Fit Indices (Standard &amp; Robust):</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Model Fit Indices (Standard &amp; Robust):</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>fit_indices_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Measure =</span> <span class="fu">names</span>(fit_indices),</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Value =</span> <span class="fu">round</span>(fit_indices, <span class="dv">3</span>)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fit_indices_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         Measure   Value
+1          chisq 233.904
+2             df 247.000
+3         pvalue   0.716
+4            cfi   1.000
+5            tli   1.002
+6          rmsea   0.000
+7           srmr   0.037
+8   chisq.scaled 458.467
+9      df.scaled 247.000
+10 pvalue.scaled   0.000
+11    cfi.robust   0.923
+12    tli.robust   0.873
+13  rmsea.robust   0.059
+14          srmr   0.037</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract Standardized Factor Loadings</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Get standardized solution</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>std_solution <span class="ot">&lt;-</span> <span class="fu">standardizedSolution</span>(fit1)</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter only loadings (Lambda matrix)</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>std_loadings <span class="ot">&lt;-</span> std_solution <span class="sc">%&gt;%</span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(op <span class="sc">==</span> <span class="st">"=~"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(lhs, rhs, est.std) <span class="sc">%&gt;%</span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(lhs, <span class="fu">desc</span>(<span class="fu">abs</span>(est.std)))  <span class="co"># Sorted by factor and magnitude</span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(std_loadings) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Factor"</span>, <span class="st">"Item"</span>, <span class="st">"Standardized Loading"</span>)</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Display standardized loadings</span></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">Standardized Factor Loadings:</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Standardized Factor Loadings:</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(std_loadings)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    Factor     Item Standardized.Loading
+1       f1  item_86                0.575
+2       f1  item_81                0.569
+3       f1 item_105                0.506
+4       f1  item_48                0.505
+5       f1  item_57                0.465
+6       f1  item_38                0.365
+7       f1   item_5                0.338
+8       f1  item_39                0.336
+9       f1 item_103                0.318
+10      f1 item_194               -0.271
+11      f1 item_186                0.224
+12      f1 item_137               -0.219
+13      f1   item_7                0.176
+14      f1  item_85                0.174
+15      f1  item_41                0.170
+16      f1  item_34                0.168
+17      f1  item_96               -0.161
+18      f1 item_119               -0.155
+19      f1  item_45                0.132
+20      f1  item_29                0.121
+21      f1  item_23               -0.111
+22      f1 item_116                0.085
+23      f1 item_129                0.065
+24      f1 item_143                0.064
+25      f1  item_79                0.063
+26      f1 item_111               -0.051
+27      f1 item_133                0.028
+28      f1 item_128               -0.022
+29      f1  item_16                0.008
+30      f2 item_129                0.906
+31      f2 item_133                0.833
+32      f2  item_81                0.718
+33      f2 item_105                0.590
+34      f2  item_48                0.539
+35      f2 item_103                0.496
+36      f2   item_5                0.472
+37      f2  item_39                0.399
+38      f2 item_116                0.396
+39      f2  item_29                0.355
+40      f2 item_111                0.272
+41      f2  item_86                0.259
+42      f2  item_23                0.243
+43      f2 item_137                0.199
+44      f2  item_96                0.197
+45      f2  item_57                0.187
+46      f2  item_34                0.174
+47      f2  item_45                0.142
+48      f2  item_85                0.119
+49      f2  item_79                0.101
+50      f2  item_16               -0.089
+51      f2 item_119                0.086
+52      f2  item_41               -0.063
+53      f2   item_7               -0.045
+54      f2 item_143               -0.044
+55      f2 item_194               -0.038
+56      f2 item_128               -0.034
+57      f2 item_186               -0.029
+58      f2  item_38                0.019
+59      f3 item_143                0.932
+60      f3  item_79                0.849
+61      f3 item_186                0.224
+62      f3 item_194                0.223
+63      f3  item_85                0.210
+64      f3  item_45               -0.200
+65      f3  item_86               -0.180
+66      f3  item_39               -0.170
+67      f3 item_116               -0.153
+68      f3   item_5                0.140
+69      f3  item_38                0.134
+70      f3 item_111               -0.124
+71      f3 item_105                0.114
+72      f3 item_128               -0.104
+73      f3  item_16               -0.100
+74      f3  item_48                0.093
+75      f3   item_7               -0.077
+76      f3  item_23               -0.070
+77      f3  item_96               -0.067
+78      f3 item_103               -0.064
+79      f3  item_41               -0.056
+80      f3 item_133                0.054
+81      f3  item_34               -0.040
+82      f3 item_119               -0.029
+83      f3 item_129                0.023
+84      f3  item_81               -0.019
+85      f3  item_29                0.019
+86      f3  item_57               -0.013
+87      f3 item_137                0.006
+88      f4 item_119                0.838
+89      f4 item_111                0.807
+90      f4  item_34                0.774
+91      f4  item_23                0.700
+92      f4  item_41                0.594
+93      f4  item_39                0.423
+94      f4 item_103                0.384
+95      f4 item_116                0.282
+96      f4 item_194                0.246
+97      f4  item_48                0.224
+98      f4  item_85                0.191
+99      f4 item_143               -0.189
+100     f4  item_38               -0.167
+101     f4 item_137                0.155
+102     f4  item_96                0.135
+103     f4 item_128                0.127
+104     f4  item_86                0.108
+105     f4  item_29               -0.095
+106     f4 item_105                0.081
+107     f4  item_57               -0.077
+108     f4  item_45               -0.060
+109     f4   item_7               -0.060
+110     f4 item_133                0.059
+111     f4 item_129               -0.058
+112     f4  item_79               -0.056
+113     f4  item_16                0.029
+114     f4   item_5               -0.028
+115     f4  item_81               -0.027
+116     f4 item_186               -0.019
+117     f5   item_7                1.015
+118     f5 item_128                0.801
+119     f5  item_16                0.665
+120     f5 item_186                0.480
+121     f5  item_38                0.425
+122     f5  item_45                0.398
+123     f5  item_23               -0.319
+124     f5  item_86                0.307
+125     f5  item_85                0.240
+126     f5 item_137                0.172
+127     f5 item_103               -0.168
+128     f5  item_79                0.164
+129     f5 item_143                0.163
+130     f5  item_57                0.160
+131     f5  item_39                0.156
+132     f5 item_194                0.133
+133     f5  item_81                0.126
+134     f5 item_129                0.119
+135     f5 item_111               -0.100
+136     f5  item_34               -0.097
+137     f5 item_119               -0.091
+138     f5 item_105                0.090
+139     f5  item_96                0.074
+140     f5  item_29                0.063
+141     f5   item_5               -0.063
+142     f5  item_41               -0.061
+143     f5 item_133               -0.030
+144     f5 item_116               -0.024
+145     f5  item_48               -0.015
+146     f6 item_137                0.845
+147     f6  item_96                0.753
+148     f6 item_116                0.491
+149     f6 item_194                0.408
+150     f6  item_81               -0.281
+151     f6 item_103                0.255
+152     f6  item_23                0.240
+153     f6  item_57               -0.223
+154     f6  item_39                0.221
+155     f6  item_38                0.220
+156     f6  item_86               -0.220
+157     f6  item_48               -0.207
+158     f6  item_34                0.163
+159     f6  item_45                0.132
+160     f6 item_128                0.132
+161     f6  item_41               -0.124
+162     f6 item_143                0.122
+163     f6 item_186                0.106
+164     f6   item_7                0.106
+165     f6 item_111               -0.091
+166     f6 item_133                0.087
+167     f6  item_79                0.054
+168     f6  item_16                0.031
+169     f6  item_29               -0.014
+170     f6 item_119               -0.012
+171     f6   item_5                0.008
+172     f6  item_85               -0.008
+173     f6 item_129               -0.006
+174     f6 item_105                0.001</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract Interfactor Correlations</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract standardized correlations (Phi matrix)</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>interfactor_corr <span class="ot">&lt;-</span> std_solution <span class="sc">%&gt;%</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(op <span class="sc">==</span> <span class="st">"~~"</span> <span class="sc">&amp;</span> lhs <span class="sc">!=</span> rhs) <span class="sc">%&gt;%</span>  <span class="co"># Only factor correlations</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(lhs, rhs, est.std) <span class="sc">%&gt;%</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(<span class="fu">abs</span>(est.std)))  <span class="co"># Sort by magnitude</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(interfactor_corr) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Factor 1"</span>, <span class="st">"Factor 2"</span>, <span class="st">"Standardized Correlation"</span>)</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Display interfactor correlations</span></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">Interfactor Correlations:</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Interfactor Correlations:</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(interfactor_corr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Factor.1 Factor.2 Standardized.Correlation
+1        f3       f4                    0.697
+2        f4       f5                    0.662
+3        f1       f6                    0.568
+4        f3       f5                    0.515
+5        f5       f6                   -0.401
+6        f4       f6                   -0.396
+7        f2       f6                    0.352
+8        f3       f6                   -0.279
+9        f1       f5                   -0.270
+10       f2       f4                   -0.215
+11       f2       f3                   -0.204
+12       f1       f3                   -0.149
+13       f1       f4                   -0.134
+14       f2       f5                   -0.050
+15       f1       f2                    0.022</code></pre>
+</div>
+</div>
+</section>
+<section id="classification-accuracy" class="level3">
+<h3 class="anchored" data-anchor-id="classification-accuracy">Classification Accuracy</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract manifest variables (indicators) from the fitted model</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>indicator_names <span class="ot">&lt;-</span> <span class="fu">lavNames</span>(fit1, <span class="at">type =</span> <span class="st">"ov"</span>)</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Select corresponding variables from imputed data</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>XX <span class="ot">&lt;-</span> imp_selected <span class="sc">|&gt;</span> </span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="fu">all_of</span>(indicator_names))</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to matrix for modeling</span></span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(XX)</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> df<span class="sc">$</span>death_risk  </span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Ensure death_risk is a binary factor</span></span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>death_risk <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(df<span class="sc">$</span>death_risk)</span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Merge imp_selected with the outcome variable</span></span>
+<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a>df_model <span class="ot">&lt;-</span> imp_selected <span class="sc">%&gt;%</span></span>
+<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">death_risk =</span> df<span class="sc">$</span>death_risk)</span>
+<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Split data into training (80%) and testing (20%) sets</span></span>
+<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)  <span class="co"># For reproducibility</span></span>
+<span id="cb35-21"><a href="#cb35-21" aria-hidden="true" tabindex="-1"></a>trainIndex <span class="ot">&lt;-</span> <span class="fu">createDataPartition</span>(df_model<span class="sc">$</span>death_risk, <span class="at">p =</span> <span class="fl">0.8</span>, <span class="at">list =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb35-22"><a href="#cb35-22" aria-hidden="true" tabindex="-1"></a>train_data <span class="ot">&lt;-</span> df_model[trainIndex, ]</span>
+<span id="cb35-23"><a href="#cb35-23" aria-hidden="true" tabindex="-1"></a>test_data <span class="ot">&lt;-</span> df_model[<span class="sc">-</span>trainIndex, ]</span>
+<span id="cb35-24"><a href="#cb35-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-25"><a href="#cb35-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit logistic regression model</span></span>
+<span id="cb35-26"><a href="#cb35-26" aria-hidden="true" tabindex="-1"></a>logit_model <span class="ot">&lt;-</span> <span class="fu">glm</span>(death_risk <span class="sc">~</span> ., <span class="at">data =</span> train_data, <span class="at">family =</span> binomial)</span>
+<span id="cb35-27"><a href="#cb35-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-28"><a href="#cb35-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Predict probabilities on test set</span></span>
+<span id="cb35-29"><a href="#cb35-29" aria-hidden="true" tabindex="-1"></a>pred_probs <span class="ot">&lt;-</span> <span class="fu">predict</span>(logit_model, test_data, <span class="at">type =</span> <span class="st">"response"</span>)</span>
+<span id="cb35-30"><a href="#cb35-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-31"><a href="#cb35-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert probabilities to class labels (0.5 threshold)</span></span>
+<span id="cb35-32"><a href="#cb35-32" aria-hidden="true" tabindex="-1"></a>pred_classes <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">ifelse</span>(pred_probs <span class="sc">&gt;</span> <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">0</span>), <span class="at">levels =</span> <span class="fu">levels</span>(test_data<span class="sc">$</span>death_risk))</span>
+<span id="cb35-33"><a href="#cb35-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-34"><a href="#cb35-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute classification accuracy</span></span>
+<span id="cb35-35"><a href="#cb35-35" aria-hidden="true" tabindex="-1"></a>accuracy <span class="ot">&lt;-</span> <span class="fu">mean</span>(pred_classes <span class="sc">==</span> test_data<span class="sc">$</span>death_risk)</span>
+<span id="cb35-36"><a href="#cb35-36" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Classification Accuracy:"</span>, <span class="fu">round</span>(accuracy, <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Classification Accuracy: 0.556 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute AUC (Area Under the Curve)</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>roc_curve <span class="ot">&lt;-</span> <span class="fu">roc</span>(test_data<span class="sc">$</span>death_risk, pred_probs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Setting levels: control = 0, case = 1</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Setting direction: controls &lt; cases</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>auc_value <span class="ot">&lt;-</span> <span class="fu">auc</span>(roc_curve)</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"AUC:"</span>, <span class="fu">round</span>(auc_value, <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>AUC: 0.612 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Permutation Test: Evaluating Accuracy Against Chance Level</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>null_accuracies <span class="ot">&lt;-</span> <span class="fu">replicate</span>(<span class="dv">1000</span>, {</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>  shuffled_risk <span class="ot">&lt;-</span> <span class="fu">sample</span>(train_data<span class="sc">$</span>death_risk)  <span class="co"># Shuffle class labels</span></span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Fit model on shuffled labels</span></span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>  null_model <span class="ot">&lt;-</span> <span class="fu">glm</span>(shuffled_risk <span class="sc">~</span> ., <span class="at">data =</span> train_data, <span class="at">family =</span> binomial)</span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Predict using null model</span></span>
+<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a>  null_preds <span class="ot">&lt;-</span> <span class="fu">predict</span>(null_model, test_data, <span class="at">type =</span> <span class="st">"response"</span>)</span>
+<span id="cb42-12"><a href="#cb42-12" aria-hidden="true" tabindex="-1"></a>  null_classes <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">ifelse</span>(null_preds <span class="sc">&gt;</span> <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">0</span>), <span class="at">levels =</span> <span class="fu">levels</span>(test_data<span class="sc">$</span>death_risk))</span>
+<span id="cb42-13"><a href="#cb42-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb42-14"><a href="#cb42-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mean</span>(null_classes <span class="sc">==</span> test_data<span class="sc">$</span>death_risk)  <span class="co"># Compute accuracy on actual test labels</span></span>
+<span id="cb42-15"><a href="#cb42-15" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb42-16"><a href="#cb42-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-17"><a href="#cb42-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute p-value: Proportion of null models performing as well as or better than the real model</span></span>
+<span id="cb42-18"><a href="#cb42-18" aria-hidden="true" tabindex="-1"></a>p_value <span class="ot">&lt;-</span> <span class="fu">mean</span>(null_accuracies <span class="sc">&gt;=</span> accuracy)</span>
+<span id="cb42-19"><a href="#cb42-19" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"P-value for classification above chance:"</span>, <span class="fu">round</span>(p_value, <span class="dv">4</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>P-value for classification above chance: 0.332 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot ROC Curve</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(roc_curve, <span class="at">col =</span> <span class="st">"blue"</span>, <span class="at">main =</span> <span class="st">"ROC Curve"</span>)</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">a =</span> <span class="dv">0</span>, <span class="at">b =</span> <span class="dv">1</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"red"</span>)  <span class="co"># Reference line for random classification</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="item_selection_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="remove-the-worse-items" class="level2">
+<h2 class="anchored" data-anchor-id="remove-the-worse-items">Remove the worse items</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>selected_items <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"i_86"</span>, <span class="st">"i_57"</span>, <span class="st">"i_5"</span>, <span class="st">"i_81"</span>, </span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"i_105"</span>, <span class="st">"i_48"</span>, <span class="st">"i_133"</span>, <span class="st">"i_129"</span>, <span class="st">"i_39"</span>, <span class="st">"i_103"</span>, </span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"i_143"</span>, <span class="st">"i_79"</span>, </span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"i_111"</span>, <span class="st">"i_34"</span>, <span class="st">"i_119"</span>, <span class="st">"i_116"</span>, <span class="st">"i_23"</span>, <span class="st">"i_41"</span>, </span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"i_186"</span>, <span class="st">"i_38"</span>, <span class="st">"i_128"</span>, <span class="st">"i_7"</span>, <span class="st">"i_16"</span>, </span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"i_137"</span>, <span class="st">"i_96"</span>, <span class="st">"i_194"</span></span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to match column names in `imp`</span></span>
+<span id="cb45-11"><a href="#cb45-11" aria-hidden="true" tabindex="-1"></a>selected_items_corrected <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"item_"</span>, <span class="fu">sub</span>(<span class="st">"^i_"</span>, <span class="st">""</span>, selected_items))</span>
+<span id="cb45-12"><a href="#cb45-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-13"><a href="#cb45-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Ensure only existing columns are selected</span></span>
+<span id="cb45-14"><a href="#cb45-14" aria-hidden="true" tabindex="-1"></a>existing_items <span class="ot">&lt;-</span> <span class="fu">intersect</span>(selected_items_corrected, <span class="fu">colnames</span>(imp))</span>
+<span id="cb45-15"><a href="#cb45-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-16"><a href="#cb45-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Issue a warning if any items are missing</span></span>
+<span id="cb45-17"><a href="#cb45-17" aria-hidden="true" tabindex="-1"></a>missing_items <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(selected_items_corrected, existing_items)</span>
+<span id="cb45-18"><a href="#cb45-18" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(missing_items) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb45-19"><a href="#cb45-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">warning</span>(<span class="st">"The following items were not found in the dataset: "</span>, <span class="fu">paste</span>(missing_items, <span class="at">collapse =</span> <span class="st">", "</span>))</span>
+<span id="cb45-20"><a href="#cb45-20" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb45-21"><a href="#cb45-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-22"><a href="#cb45-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Select the matching columns</span></span>
+<span id="cb45-23"><a href="#cb45-23" aria-hidden="true" tabindex="-1"></a>imp_selected <span class="ot">&lt;-</span> imp <span class="sc">%&gt;%</span> </span>
+<span id="cb45-24"><a href="#cb45-24" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="fu">all_of</span>(existing_items))</span>
+<span id="cb45-25"><a href="#cb45-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-26"><a href="#cb45-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Validate the selection</span></span>
+<span id="cb45-27"><a href="#cb45-27" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">names</span>(imp_selected))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "item_86"  "item_57"  "item_5"   "item_81"  "item_105" "item_48" 
+ [7] "item_133" "item_129" "item_39"  "item_103" "item_143" "item_79" 
+[13] "item_111" "item_34"  "item_119" "item_116" "item_23"  "item_41" 
+[19] "item_186" "item_38"  "item_128" "item_7"   "item_16"  "item_137"
+[25] "item_96"  "item_194"</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define Target Matrix for Factor Structure (26x6)</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize a 26x6 matrix filled with zeros</span></span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>TARGET <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow =</span> <span class="fu">length</span>(existing_items), <span class="at">ncol =</span> <span class="dv">6</span>)</span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Assign factor loadings dynamically</span></span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a>factor_assignments <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">F1 =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>),</span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">F2 =</span> <span class="fu">c</span>(<span class="dv">5</span><span class="sc">:</span><span class="dv">10</span>),</span>
+<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">F3 =</span> <span class="fu">c</span>(<span class="dv">11</span><span class="sc">:</span><span class="dv">12</span>),</span>
+<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">F4 =</span> <span class="fu">c</span>(<span class="dv">13</span><span class="sc">:</span><span class="dv">18</span>),</span>
+<span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">F5 =</span> <span class="fu">c</span>(<span class="dv">19</span><span class="sc">:</span><span class="dv">23</span>),</span>
+<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">F6 =</span> <span class="fu">c</span>(<span class="dv">24</span><span class="sc">:</span><span class="dv">26</span>)</span>
+<span id="cb47-14"><a href="#cb47-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb47-15"><a href="#cb47-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-16"><a href="#cb47-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Assign 1s based on factor structure</span></span>
+<span id="cb47-17"><a href="#cb47-17" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (factor <span class="cf">in</span> <span class="fu">names</span>(factor_assignments)) {</span>
+<span id="cb47-18"><a href="#cb47-18" aria-hidden="true" tabindex="-1"></a>  TARGET[factor_assignments[[factor]], <span class="fu">as.numeric</span>(<span class="fu">substr</span>(factor, <span class="dv">2</span>, <span class="dv">2</span>))] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb47-19"><a href="#cb47-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb47-20"><a href="#cb47-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-21"><a href="#cb47-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Add row and column names for clarity</span></span>
+<span id="cb47-22"><a href="#cb47-22" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(TARGET) <span class="ot">&lt;-</span> existing_items</span>
+<span id="cb47-23"><a href="#cb47-23" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(TARGET) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"F"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>)</span>
+<span id="cb47-24"><a href="#cb47-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-25"><a href="#cb47-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the target rotation matrix</span></span>
+<span id="cb47-26"><a href="#cb47-26" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(TARGET)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         F1 F2 F3 F4 F5 F6
+item_86   1  0  0  0  0  0
+item_57   1  0  0  0  0  0
+item_5    1  0  0  0  0  0
+item_81   1  0  0  0  0  0
+item_105  0  1  0  0  0  0
+item_48   0  1  0  0  0  0
+item_133  0  1  0  0  0  0
+item_129  0  1  0  0  0  0
+item_39   0  1  0  0  0  0
+item_103  0  1  0  0  0  0
+item_143  0  0  1  0  0  0
+item_79   0  0  1  0  0  0
+item_111  0  0  0  1  0  0
+item_34   0  0  0  1  0  0
+item_119  0  0  0  1  0  0
+item_116  0  0  0  1  0  0
+item_23   0  0  0  1  0  0
+item_41   0  0  0  1  0  0
+item_186  0  0  0  0  1  0
+item_38   0  0  0  0  1  0
+item_128  0  0  0  0  1  0
+item_7    0  0  0  0  1  0
+item_16   0  0  0  0  1  0
+item_137  0  0  0  0  0  1
+item_96   0  0  0  0  0  1
+item_194  0  0  0  0  0  1</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the ESEM Model in Lavaan Syntax</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="st">'</span></span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a><span class="st">    efa("efa1")*f1 + </span></span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a><span class="st">    efa("efa1")*f2 + </span></span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a><span class="st">    efa("efa1")*f3 + </span></span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a><span class="st">    efa("efa1")*f4 + </span></span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a><span class="st">    efa("efa1")*f5 + </span></span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a><span class="st">    efa("efa1")*f6 =~ </span></span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a><span class="st">       # F1</span></span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a><span class="st">       item_86 + item_57 + item_5 + item_81 + </span></span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a><span class="st">       # F2</span></span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a><span class="st">       item_105 + item_48 + item_133 + item_129 + item_39 + item_103 + </span></span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a><span class="st">       # F3</span></span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a><span class="st">       item_143 + item_79 + </span></span>
+<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a><span class="st">       # F4</span></span>
+<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a><span class="st">       item_111 + item_34 + item_119 + item_116 + item_23 + item_41 + </span></span>
+<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a><span class="st">       # F5</span></span>
+<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a><span class="st">       item_186 + item_38 + item_128 + item_7 + item_16 +</span></span>
+<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a><span class="st">       # F6</span></span>
+<span id="cb49-21"><a href="#cb49-21" aria-hidden="true" tabindex="-1"></a><span class="st">       item_137 + item_96 + item_194</span></span>
+<span id="cb49-22"><a href="#cb49-22" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span>
+<span id="cb49-23"><a href="#cb49-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-24"><a href="#cb49-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit the ESEM Model with Target Rotation</span></span>
+<span id="cb49-25"><a href="#cb49-25" aria-hidden="true" tabindex="-1"></a>fit2 <span class="ot">&lt;-</span> <span class="fu">sem</span>(</span>
+<span id="cb49-26"><a href="#cb49-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">model =</span> model,</span>
+<span id="cb49-27"><a href="#cb49-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> imp_selected,  </span>
+<span id="cb49-28"><a href="#cb49-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">ordered =</span> <span class="cn">TRUE</span>,  <span class="co"># Use ordered estimation if Likert-type items</span></span>
+<span id="cb49-29"><a href="#cb49-29" aria-hidden="true" tabindex="-1"></a>  <span class="at">rotation =</span> <span class="st">"target"</span>,</span>
+<span id="cb49-30"><a href="#cb49-30" aria-hidden="true" tabindex="-1"></a>  <span class="at">rotation.args =</span> <span class="fu">list</span>(<span class="at">target =</span> TARGET)</span>
+<span id="cb49-31"><a href="#cb49-31" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>fit2_indices <span class="ot">&lt;-</span> <span class="fu">fitMeasures</span>(fit2, <span class="fu">c</span>(</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"chisq"</span>, <span class="st">"df"</span>, <span class="st">"pvalue"</span>, <span class="st">"cfi"</span>, <span class="st">"tli"</span>, <span class="st">"rmsea"</span>, <span class="st">"srmr"</span>,</span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"chisq.scaled"</span>, <span class="st">"df.scaled"</span>, <span class="st">"pvalue.scaled"</span>, <span class="st">"cfi.robust"</span>, <span class="st">"tli.robust"</span>,</span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"rmsea.robust"</span>, <span class="st">"srmr"</span></span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Display selected fit indices (Standard &amp; Robust)</span></span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">Model Fit Indices (Standard &amp; Robust):</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Model Fit Indices (Standard &amp; Robust):</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>fit2_indices_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Measure =</span> <span class="fu">names</span>(fit2_indices),</span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Value =</span> <span class="fu">round</span>(fit2_indices, <span class="dv">3</span>)</span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fit2_indices_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         Measure   Value
+1          chisq 180.180
+2             df 184.000
+3         pvalue   0.566
+4            cfi   1.000
+5            tli   1.001
+6          rmsea   0.000
+7           srmr   0.035
+8   chisq.scaled 387.196
+9      df.scaled 184.000
+10 pvalue.scaled   0.000
+11    cfi.robust   0.931
+12    tli.robust   0.878
+13  rmsea.robust   0.063
+14          srmr   0.035</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract Standardized Factor Loadings</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Get standardized solution</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>std_solution <span class="ot">&lt;-</span> <span class="fu">standardizedSolution</span>(fit2)</span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter only loadings (Lambda matrix)</span></span>
+<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a>std_loadings <span class="ot">&lt;-</span> std_solution <span class="sc">%&gt;%</span></span>
+<span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(op <span class="sc">==</span> <span class="st">"=~"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb54-8"><a href="#cb54-8" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(lhs, rhs, est.std) <span class="sc">%&gt;%</span></span>
+<span id="cb54-9"><a href="#cb54-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(lhs, <span class="fu">desc</span>(<span class="fu">abs</span>(est.std)))  <span class="co"># Sorted by factor and magnitude</span></span>
+<span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-11"><a href="#cb54-11" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(std_loadings) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Factor"</span>, <span class="st">"Item"</span>, <span class="st">"Standardized Loading"</span>)</span>
+<span id="cb54-12"><a href="#cb54-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-13"><a href="#cb54-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Display standardized loadings</span></span>
+<span id="cb54-14"><a href="#cb54-14" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">Standardized Factor Loadings:</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Standardized Factor Loadings:</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(std_loadings)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    Factor     Item Standardized.Loading
+1       f1  item_86                0.555
+2       f1  item_81                0.555
+3       f1 item_105                0.482
+4       f1  item_48                0.470
+5       f1  item_57                0.435
+6       f1   item_5                0.336
+7       f1 item_103                0.324
+8       f1  item_38                0.322
+9       f1  item_39                0.322
+10      f1 item_194               -0.321
+11      f1 item_119               -0.255
+12      f1 item_137               -0.197
+13      f1 item_186                0.157
+14      f1   item_7                0.147
+15      f1 item_111               -0.139
+16      f1  item_23               -0.125
+17      f1  item_96               -0.123
+18      f1  item_41                0.119
+19      f1 item_116                0.114
+20      f1  item_34                0.111
+21      f1 item_129                0.083
+22      f1  item_79               -0.062
+23      f1 item_143               -0.058
+24      f1 item_128               -0.050
+25      f1 item_133                0.023
+26      f1  item_16                0.001
+27      f2 item_129                0.888
+28      f2 item_133                0.847
+29      f2  item_81                0.734
+30      f2 item_105                0.630
+31      f2  item_48                0.562
+32      f2 item_103                0.499
+33      f2   item_5                0.471
+34      f2  item_39                0.414
+35      f2 item_116                0.379
+36      f2 item_111                0.299
+37      f2  item_86                0.283
+38      f2  item_57                0.213
+39      f2  item_23                0.194
+40      f2 item_137                0.189
+41      f2  item_96                0.186
+42      f2  item_34                0.152
+43      f2  item_79                0.123
+44      f2 item_119                0.113
+45      f2  item_16               -0.106
+46      f2  item_38                0.081
+47      f2  item_41               -0.077
+48      f2 item_194               -0.038
+49      f2   item_7               -0.036
+50      f2 item_128               -0.031
+51      f2 item_186                0.019
+52      f2 item_143               -0.001
+53      f3 item_143                0.958
+54      f3  item_79                0.782
+55      f3 item_186                0.226
+56      f3 item_194                0.192
+57      f3  item_86               -0.173
+58      f3 item_116               -0.153
+59      f3  item_38                0.146
+60      f3 item_128               -0.127
+61      f3 item_105                0.127
+62      f3   item_5                0.121
+63      f3  item_39               -0.120
+64      f3 item_111               -0.113
+65      f3  item_48                0.112
+66      f3  item_16               -0.111
+67      f3  item_23               -0.106
+68      f3  item_41               -0.083
+69      f3   item_7               -0.080
+70      f3  item_34               -0.065
+71      f3 item_103               -0.065
+72      f3 item_133                0.054
+73      f3  item_57               -0.049
+74      f3  item_96               -0.047
+75      f3 item_137                0.021
+76      f3  item_81               -0.018
+77      f3 item_119               -0.018
+78      f3 item_129                0.012
+79      f4 item_119                0.835
+80      f4  item_34                0.793
+81      f4 item_111                0.791
+82      f4  item_23                0.748
+83      f4  item_41                0.615
+84      f4  item_39                0.377
+85      f4 item_103                0.360
+86      f4 item_116                0.253
+87      f4  item_38               -0.251
+88      f4 item_194                0.240
+89      f4  item_48                0.223
+90      f4   item_7               -0.172
+91      f4 item_143               -0.139
+92      f4  item_57               -0.135
+93      f4 item_137                0.114
+94      f4  item_96                0.099
+95      f4 item_186               -0.076
+96      f4 item_129               -0.073
+97      f4  item_81               -0.057
+98      f4 item_133                0.037
+99      f4  item_86                0.036
+100     f4  item_16               -0.031
+101     f4 item_105                0.031
+102     f4  item_79                0.023
+103     f4   item_5               -0.021
+104     f4 item_128                0.018
+105     f5   item_7                1.086
+106     f5 item_128                0.908
+107     f5  item_16                0.724
+108     f5 item_186                0.505
+109     f5  item_38                0.456
+110     f5  item_23               -0.325
+111     f5  item_86                0.324
+112     f5  item_57                0.198
+113     f5 item_137                0.196
+114     f5 item_103               -0.175
+115     f5 item_194                0.171
+116     f5  item_79                0.124
+117     f5 item_111               -0.123
+118     f5  item_39                0.122
+119     f5 item_119               -0.107
+120     f5  item_34               -0.103
+121     f5 item_143                0.100
+122     f5  item_96                0.092
+123     f5   item_5               -0.088
+124     f5  item_48               -0.080
+125     f5 item_133               -0.078
+126     f5 item_105                0.074
+127     f5  item_81                0.069
+128     f5 item_129                0.058
+129     f5  item_41               -0.050
+130     f5 item_116               -0.028
+131     f6 item_137                0.827
+132     f6  item_96                0.732
+133     f6 item_116                0.488
+134     f6 item_194                0.413
+135     f6  item_81               -0.271
+136     f6  item_23                0.269
+137     f6 item_103                0.251
+138     f6  item_48               -0.212
+139     f6  item_86               -0.209
+140     f6  item_39                0.207
+141     f6  item_57               -0.203
+142     f6  item_38                0.197
+143     f6  item_34                0.194
+144     f6 item_128                0.159
+145     f6   item_7                0.130
+146     f6 item_143                0.121
+147     f6 item_111               -0.104
+148     f6 item_186                0.098
+149     f6  item_41               -0.093
+150     f6  item_79                0.073
+151     f6 item_133                0.072
+152     f6  item_16                0.060
+153     f6 item_119               -0.024
+154     f6   item_5                0.017
+155     f6 item_105               -0.012
+156     f6 item_129               -0.005</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract Interfactor Correlations</span></span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract standardized correlations (Phi matrix)</span></span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>interfactor_corr <span class="ot">&lt;-</span> std_solution <span class="sc">%&gt;%</span></span>
+<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(op <span class="sc">==</span> <span class="st">"~~"</span> <span class="sc">&amp;</span> lhs <span class="sc">!=</span> rhs) <span class="sc">%&gt;%</span>  <span class="co"># Only factor correlations</span></span>
+<span id="cb58-6"><a href="#cb58-6" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(lhs, rhs, est.std) <span class="sc">%&gt;%</span></span>
+<span id="cb58-7"><a href="#cb58-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(<span class="fu">abs</span>(est.std)))  <span class="co"># Sort by magnitude</span></span>
+<span id="cb58-8"><a href="#cb58-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-9"><a href="#cb58-9" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(interfactor_corr) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Factor 1"</span>, <span class="st">"Factor 2"</span>, <span class="st">"Standardized Correlation"</span>)</span>
+<span id="cb58-10"><a href="#cb58-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-11"><a href="#cb58-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Display interfactor correlations</span></span>
+<span id="cb58-12"><a href="#cb58-12" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">Interfactor Correlations:</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Interfactor Correlations:</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(interfactor_corr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Factor.1 Factor.2 Standardized.Correlation
+1        f4       f5                    0.713
+2        f3       f4                    0.677
+3        f3       f5                    0.550
+4        f1       f6                    0.500
+5        f5       f6                   -0.427
+6        f4       f6                   -0.371
+7        f2       f6                    0.346
+8        f3       f6                   -0.236
+9        f2       f3                   -0.199
+10       f1       f5                   -0.196
+11       f2       f4                   -0.169
+12       f1       f2                   -0.039
+13       f2       f5                   -0.021
+14       f1       f3                    0.006
+15       f1       f4                   -0.003</code></pre>
+</div>
+</div>
+</section>
+<section id="combine-the-first-two-factors" class="level2">
+<h2 class="anchored" data-anchor-id="combine-the-first-two-factors">Combine the first two factors</h2>
+<p>Also, add additional items to maximize classification accuracy. These are the items that maximally contribute to accurate classification: item_22 item_23 item_26 item_40 item_99 item_121 item_125 item_139 item_157 item_159 item_164 item_187.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>selected_items <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"i_86"</span>, <span class="st">"i_57"</span>, <span class="st">"i_5"</span>, <span class="st">"i_81"</span>, </span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"i_105"</span>, <span class="st">"i_48"</span>, <span class="st">"i_133"</span>, <span class="st">"i_129"</span>, <span class="st">"i_39"</span>, <span class="st">"i_103"</span>, </span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"i_143"</span>, <span class="st">"i_79"</span>, </span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"i_111"</span>, <span class="st">"i_34"</span>, <span class="st">"i_119"</span>, <span class="st">"i_23"</span>, <span class="st">"i_41"</span>, <span class="st">"i_139"</span>,</span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"i_186"</span>, <span class="st">"i_38"</span>, <span class="st">"i_128"</span>, <span class="st">"i_7"</span>, <span class="st">"i_16"</span>, <span class="st">"i_125"</span>, </span>
+<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"i_137"</span>, <span class="st">"i_96"</span>, <span class="st">"i_194"</span>, <span class="st">"i_159"</span></span>
+<span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb62-9"><a href="#cb62-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-10"><a href="#cb62-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to match column names in `imp`</span></span>
+<span id="cb62-11"><a href="#cb62-11" aria-hidden="true" tabindex="-1"></a>selected_items_corrected <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"item_"</span>, <span class="fu">sub</span>(<span class="st">"^i_"</span>, <span class="st">""</span>, selected_items))</span>
+<span id="cb62-12"><a href="#cb62-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-13"><a href="#cb62-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Ensure only existing columns are selected</span></span>
+<span id="cb62-14"><a href="#cb62-14" aria-hidden="true" tabindex="-1"></a>existing_items <span class="ot">&lt;-</span> <span class="fu">intersect</span>(selected_items_corrected, <span class="fu">colnames</span>(imp))</span>
+<span id="cb62-15"><a href="#cb62-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-16"><a href="#cb62-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Issue a warning if any items are missing</span></span>
+<span id="cb62-17"><a href="#cb62-17" aria-hidden="true" tabindex="-1"></a>missing_items <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(selected_items_corrected, existing_items)</span>
+<span id="cb62-18"><a href="#cb62-18" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(missing_items) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb62-19"><a href="#cb62-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">warning</span>(<span class="st">"The following items were not found in the dataset: "</span>, <span class="fu">paste</span>(missing_items, <span class="at">collapse =</span> <span class="st">", "</span>))</span>
+<span id="cb62-20"><a href="#cb62-20" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb62-21"><a href="#cb62-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-22"><a href="#cb62-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Select the matching columns</span></span>
+<span id="cb62-23"><a href="#cb62-23" aria-hidden="true" tabindex="-1"></a>imp_selected <span class="ot">&lt;-</span> imp <span class="sc">%&gt;%</span> </span>
+<span id="cb62-24"><a href="#cb62-24" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="fu">all_of</span>(existing_items))</span>
+<span id="cb62-25"><a href="#cb62-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-26"><a href="#cb62-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Validate the selection</span></span>
+<span id="cb62-27"><a href="#cb62-27" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">names</span>(imp_selected))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "item_86"  "item_57"  "item_5"   "item_81"  "item_105" "item_48" 
+ [7] "item_133" "item_129" "item_39"  "item_103" "item_143" "item_79" 
+[13] "item_111" "item_34"  "item_119" "item_23"  "item_41"  "item_139"
+[19] "item_186" "item_38"  "item_128" "item_7"   "item_16"  "item_125"
+[25] "item_137" "item_96"  "item_194" "item_159"</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define Target Matrix for Factor Structure</span></span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Determine the number of rows dynamically</span></span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>num_items <span class="ot">&lt;-</span> <span class="fu">length</span>(existing_items)</span>
+<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a>TARGET <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow =</span> num_items, <span class="at">ncol =</span> <span class="dv">5</span>)</span>
+<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Assign factor loadings dynamically</span></span>
+<span id="cb64-8"><a href="#cb64-8" aria-hidden="true" tabindex="-1"></a>factor_assignments <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb64-9"><a href="#cb64-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">F1 =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>,    <span class="co"># Caratteristiche bambino e richieste caregiving</span></span>
+<span id="cb64-10"><a href="#cb64-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">F2 =</span> <span class="dv">11</span><span class="sc">:</span><span class="dv">12</span>,   <span class="co"># Percezione cura</span></span>
+<span id="cb64-11"><a href="#cb64-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">F3 =</span> <span class="dv">13</span><span class="sc">:</span><span class="dv">18</span>,   <span class="co"># Fattori intrapsichici</span></span>
+<span id="cb64-12"><a href="#cb64-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">F4 =</span> <span class="dv">19</span><span class="sc">:</span><span class="dv">24</span>,   <span class="co"># Coping</span></span>
+<span id="cb64-13"><a href="#cb64-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">F5 =</span> <span class="dv">25</span><span class="sc">:</span><span class="dv">28</span>    <span class="co"># Iperprotezione</span></span>
+<span id="cb64-14"><a href="#cb64-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb64-15"><a href="#cb64-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-16"><a href="#cb64-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Assign 1s based on factor structure</span></span>
+<span id="cb64-17"><a href="#cb64-17" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (factor <span class="cf">in</span> <span class="fu">names</span>(factor_assignments)) {</span>
+<span id="cb64-18"><a href="#cb64-18" aria-hidden="true" tabindex="-1"></a>  TARGET[factor_assignments[[factor]], <span class="fu">as.numeric</span>(<span class="fu">substr</span>(factor, <span class="dv">2</span>, <span class="dv">2</span>))] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb64-19"><a href="#cb64-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb64-20"><a href="#cb64-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-21"><a href="#cb64-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Add row and column names for clarity</span></span>
+<span id="cb64-22"><a href="#cb64-22" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(TARGET) <span class="ot">&lt;-</span> existing_items</span>
+<span id="cb64-23"><a href="#cb64-23" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(TARGET) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"F"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>)</span>
+<span id="cb64-24"><a href="#cb64-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-25"><a href="#cb64-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the target rotation matrix</span></span>
+<span id="cb64-26"><a href="#cb64-26" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(TARGET)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         F1 F2 F3 F4 F5
+item_86   1  0  0  0  0
+item_57   1  0  0  0  0
+item_5    1  0  0  0  0
+item_81   1  0  0  0  0
+item_105  1  0  0  0  0
+item_48   1  0  0  0  0
+item_133  1  0  0  0  0
+item_129  1  0  0  0  0
+item_39   1  0  0  0  0
+item_103  1  0  0  0  0
+item_143  0  1  0  0  0
+item_79   0  1  0  0  0
+item_111  0  0  1  0  0
+item_34   0  0  1  0  0
+item_119  0  0  1  0  0
+item_23   0  0  1  0  0
+item_41   0  0  1  0  0
+item_139  0  0  1  0  0
+item_186  0  0  0  1  0
+item_38   0  0  0  1  0
+item_128  0  0  0  1  0
+item_7    0  0  0  1  0
+item_16   0  0  0  1  0
+item_125  0  0  0  1  0
+item_137  0  0  0  0  1
+item_96   0  0  0  0  1
+item_194  0  0  0  0  1
+item_159  0  0  0  0  1</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the ESEM Model in Lavaan Syntax</span></span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="st">'</span></span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a><span class="st">    efa("efa1")*f1 + </span></span>
+<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a><span class="st">    efa("efa1")*f2 + </span></span>
+<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a><span class="st">    efa("efa1")*f3 + </span></span>
+<span id="cb66-6"><a href="#cb66-6" aria-hidden="true" tabindex="-1"></a><span class="st">    efa("efa1")*f4 + </span></span>
+<span id="cb66-7"><a href="#cb66-7" aria-hidden="true" tabindex="-1"></a><span class="st">    efa("efa1")*f5 =~ </span></span>
+<span id="cb66-8"><a href="#cb66-8" aria-hidden="true" tabindex="-1"></a><span class="st">       # F1</span></span>
+<span id="cb66-9"><a href="#cb66-9" aria-hidden="true" tabindex="-1"></a><span class="st">       item_86 + item_57 + item_5 + item_81 + </span></span>
+<span id="cb66-10"><a href="#cb66-10" aria-hidden="true" tabindex="-1"></a><span class="st">       item_105 + item_48 + item_133 + item_129 + item_39 + item_103 + </span></span>
+<span id="cb66-11"><a href="#cb66-11" aria-hidden="true" tabindex="-1"></a><span class="st">       # F2</span></span>
+<span id="cb66-12"><a href="#cb66-12" aria-hidden="true" tabindex="-1"></a><span class="st">       item_143 + item_79 + </span></span>
+<span id="cb66-13"><a href="#cb66-13" aria-hidden="true" tabindex="-1"></a><span class="st">       # F3</span></span>
+<span id="cb66-14"><a href="#cb66-14" aria-hidden="true" tabindex="-1"></a><span class="st">       item_111 + item_34 + item_119 + item_23 + item_41 + item_139 +</span></span>
+<span id="cb66-15"><a href="#cb66-15" aria-hidden="true" tabindex="-1"></a><span class="st">       # F4</span></span>
+<span id="cb66-16"><a href="#cb66-16" aria-hidden="true" tabindex="-1"></a><span class="st">       item_186 + item_38 + item_128 + item_7 + item_16 + item_125 +</span></span>
+<span id="cb66-17"><a href="#cb66-17" aria-hidden="true" tabindex="-1"></a><span class="st">       # F4</span></span>
+<span id="cb66-18"><a href="#cb66-18" aria-hidden="true" tabindex="-1"></a><span class="st">       item_137 + item_96 + item_194 + item_159</span></span>
+<span id="cb66-19"><a href="#cb66-19" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span>
+<span id="cb66-20"><a href="#cb66-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-21"><a href="#cb66-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit the ESEM Model with Target Rotation</span></span>
+<span id="cb66-22"><a href="#cb66-22" aria-hidden="true" tabindex="-1"></a>fit3 <span class="ot">&lt;-</span> <span class="fu">sem</span>(</span>
+<span id="cb66-23"><a href="#cb66-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">model =</span> model,</span>
+<span id="cb66-24"><a href="#cb66-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> imp_selected,  </span>
+<span id="cb66-25"><a href="#cb66-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">ordered =</span> <span class="cn">TRUE</span>,  <span class="co"># Use ordered estimation if Likert-type items</span></span>
+<span id="cb66-26"><a href="#cb66-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">rotation =</span> <span class="st">"target"</span>,</span>
+<span id="cb66-27"><a href="#cb66-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">rotation.args =</span> <span class="fu">list</span>(<span class="at">target =</span> TARGET)</span>
+<span id="cb66-28"><a href="#cb66-28" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>fit3_indices <span class="ot">&lt;-</span> <span class="fu">fitMeasures</span>(fit3, <span class="fu">c</span>(</span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"chisq"</span>, <span class="st">"df"</span>, <span class="st">"pvalue"</span>, <span class="st">"cfi"</span>, <span class="st">"tli"</span>, <span class="st">"rmsea"</span>, <span class="st">"srmr"</span>,</span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"chisq.scaled"</span>, <span class="st">"df.scaled"</span>, <span class="st">"pvalue.scaled"</span>, <span class="st">"cfi.robust"</span>, <span class="st">"tli.robust"</span>,</span>
+<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"rmsea.robust"</span>, <span class="st">"srmr"</span></span>
+<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb67-7"><a href="#cb67-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Display selected fit indices (Standard &amp; Robust)</span></span>
+<span id="cb67-8"><a href="#cb67-8" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">Model Fit Indices (Standard &amp; Robust):</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Model Fit Indices (Standard &amp; Robust):</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>fit3_indices_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Measure =</span> <span class="fu">names</span>(fit3_indices),</span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Value =</span> <span class="fu">round</span>(fit3_indices, <span class="dv">3</span>)</span>
+<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb69-5"><a href="#cb69-5" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fit3_indices_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         Measure   Value
+1          chisq 342.071
+2             df 248.000
+3         pvalue   0.000
+4            cfi   0.994
+5            tli   0.991
+6          rmsea   0.029
+7           srmr   0.044
+8   chisq.scaled 647.497
+9      df.scaled 248.000
+10 pvalue.scaled   0.000
+11    cfi.robust   0.863
+12    tli.robust   0.792
+13  rmsea.robust   0.081
+14          srmr   0.044</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract Standardized Factor Loadings</span></span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Get standardized solution</span></span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>std_solution <span class="ot">&lt;-</span> <span class="fu">standardizedSolution</span>(fit3)</span>
+<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter only loadings (Lambda matrix)</span></span>
+<span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a>std_loadings <span class="ot">&lt;-</span> std_solution <span class="sc">%&gt;%</span></span>
+<span id="cb71-7"><a href="#cb71-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(op <span class="sc">==</span> <span class="st">"=~"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb71-8"><a href="#cb71-8" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(lhs, rhs, est.std) <span class="sc">%&gt;%</span></span>
+<span id="cb71-9"><a href="#cb71-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(lhs, <span class="fu">desc</span>(<span class="fu">abs</span>(est.std)))  <span class="co"># Sorted by factor and magnitude</span></span>
+<span id="cb71-10"><a href="#cb71-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-11"><a href="#cb71-11" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(std_loadings) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Factor"</span>, <span class="st">"Item"</span>, <span class="st">"Standardized Loading"</span>)</span>
+<span id="cb71-12"><a href="#cb71-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-13"><a href="#cb71-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Display standardized loadings</span></span>
+<span id="cb71-14"><a href="#cb71-14" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">Standardized Factor Loadings:</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Standardized Factor Loadings:</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(std_loadings)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    Factor     Item Standardized.Loading
+1       f1  item_81                0.977
+2       f1 item_105                0.832
+3       f1 item_129                0.807
+4       f1  item_48                0.757
+5       f1 item_133                0.730
+6       f1  item_39                0.696
+7       f1 item_103                0.693
+8       f1  item_86                0.645
+9       f1   item_5                0.579
+10      f1  item_57                0.437
+11      f1  item_34                0.344
+12      f1  item_38                0.314
+13      f1   item_7                0.302
+14      f1 item_143               -0.292
+15      f1  item_41                0.267
+16      f1  item_96                0.243
+17      f1 item_194               -0.216
+18      f1  item_23                0.207
+19      f1 item_128                0.189
+20      f1 item_111                0.183
+21      f1 item_159                0.176
+22      f1 item_186                0.162
+23      f1  item_79               -0.162
+24      f1 item_137                0.155
+25      f1 item_139                0.130
+26      f1  item_16                0.082
+27      f1 item_125                0.079
+28      f1 item_119               -0.040
+29      f2 item_143                0.743
+30      f2  item_79                0.639
+31      f2 item_125                0.316
+32      f2 item_129               -0.306
+33      f2 item_133               -0.273
+34      f2 item_186                0.255
+35      f2 item_194                0.235
+36      f2 item_137                0.233
+37      f2 item_139                0.182
+38      f2  item_81               -0.177
+39      f2  item_38                0.171
+40      f2  item_96                0.163
+41      f2  item_41                0.156
+42      f2 item_111               -0.151
+43      f2  item_34                0.104
+44      f2 item_159                0.092
+45      f2  item_86               -0.075
+46      f2   item_5                0.059
+47      f2 item_128               -0.052
+48      f2 item_105                0.051
+49      f2  item_57               -0.048
+50      f2  item_16               -0.046
+51      f2  item_23                0.025
+52      f2  item_48                0.016
+53      f2 item_103                0.015
+54      f2 item_119               -0.015
+55      f2  item_39                0.010
+56      f2   item_7               -0.006
+57      f3  item_41                0.955
+58      f3 item_119                0.786
+59      f3 item_111                0.769
+60      f3 item_139                0.766
+61      f3  item_34                0.656
+62      f3  item_23                0.610
+63      f3  item_48                0.354
+64      f3  item_39                0.342
+65      f3  item_38               -0.301
+66      f3  item_79                0.223
+67      f3 item_103                0.217
+68      f3 item_159               -0.176
+69      f3   item_7               -0.161
+70      f3 item_133                0.151
+71      f3 item_194                0.127
+72      f3  item_81                0.109
+73      f3 item_105                0.096
+74      f3 item_186               -0.095
+75      f3  item_57               -0.088
+76      f3 item_143                0.085
+77      f3 item_129                0.075
+78      f3  item_16               -0.066
+79      f3   item_5                0.051
+80      f3 item_125               -0.050
+81      f3 item_137               -0.047
+82      f3  item_86                0.044
+83      f3 item_128               -0.020
+84      f3  item_96               -0.004
+85      f4   item_7                1.052
+86      f4 item_128                0.876
+87      f4 item_125                0.741
+88      f4  item_16                0.698
+89      f4 item_186                0.669
+90      f4  item_38                0.546
+91      f4  item_86                0.422
+92      f4  item_23               -0.341
+93      f4 item_143                0.318
+94      f4  item_79                0.309
+95      f4  item_57                0.287
+96      f4  item_41               -0.263
+97      f4 item_105                0.258
+98      f4  item_81                0.249
+99      f4 item_139               -0.240
+100     f4  item_96               -0.154
+101     f4 item_129                0.149
+102     f4 item_194                0.136
+103     f4  item_48                0.117
+104     f4  item_39                0.106
+105     f4 item_159               -0.100
+106     f4 item_111               -0.078
+107     f4 item_137               -0.065
+108     f4  item_34               -0.061
+109     f4 item_119               -0.056
+110     f4 item_103               -0.035
+111     f4   item_5                0.015
+112     f4 item_133               -0.004
+113     f5 item_137                0.670
+114     f5 item_159                0.582
+115     f5 item_194                0.464
+116     f5  item_96                0.461
+117     f5 item_139               -0.429
+118     f5 item_143                0.356
+119     f5  item_41               -0.353
+120     f5  item_79                0.330
+121     f5 item_133                0.315
+122     f5  item_86               -0.253
+123     f5  item_23                0.226
+124     f5  item_81               -0.208
+125     f5 item_119                0.195
+126     f5 item_129                0.181
+127     f5  item_57               -0.180
+128     f5 item_111                0.152
+129     f5  item_48               -0.130
+130     f5   item_7               -0.119
+131     f5  item_34                0.115
+132     f5 item_103                0.100
+133     f5  item_16               -0.092
+134     f5  item_39                0.080
+135     f5 item_128               -0.046
+136     f5  item_38                0.038
+137     f5   item_5                0.038
+138     f5 item_186                0.027
+139     f5 item_105                0.018
+140     f5 item_125                0.006</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract Interfactor Correlations</span></span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract standardized correlations (Phi matrix)</span></span>
+<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a>interfactor_corr <span class="ot">&lt;-</span> std_solution <span class="sc">%&gt;%</span></span>
+<span id="cb75-5"><a href="#cb75-5" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(op <span class="sc">==</span> <span class="st">"~~"</span> <span class="sc">&amp;</span> lhs <span class="sc">!=</span> rhs) <span class="sc">%&gt;%</span>  <span class="co"># Only factor correlations</span></span>
+<span id="cb75-6"><a href="#cb75-6" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(lhs, rhs, est.std) <span class="sc">%&gt;%</span></span>
+<span id="cb75-7"><a href="#cb75-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(<span class="fu">abs</span>(est.std)))  <span class="co"># Sort by magnitude</span></span>
+<span id="cb75-8"><a href="#cb75-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-9"><a href="#cb75-9" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(interfactor_corr) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Factor 1"</span>, <span class="st">"Factor 2"</span>, <span class="st">"Standardized Correlation"</span>)</span>
+<span id="cb75-10"><a href="#cb75-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-11"><a href="#cb75-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Display interfactor correlations</span></span>
+<span id="cb75-12"><a href="#cb75-12" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">Interfactor Correlations:</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Interfactor Correlations:</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(interfactor_corr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Factor.1 Factor.2 Standardized.Correlation
+1        f3       f4                    0.750
+2        f1       f3                   -0.449
+3        f1       f4                   -0.420
+4        f1       f5                    0.376
+5        f1       f2                    0.219
+6        f2       f5                   -0.204
+7        f4       f5                    0.093
+8        f2       f4                   -0.054
+9        f3       f5                   -0.012
+10       f2       f3                    0.012</code></pre>
+</div>
+</div>
+<section id="classification-accuracy-1" class="level3">
+<h3 class="anchored" data-anchor-id="classification-accuracy-1">Classification Accuracy</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get observed variable names from the fitted model</span></span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>indicator_names <span class="ot">&lt;-</span> <span class="fu">lavNames</span>(fit3, <span class="at">type =</span> <span class="st">"ov"</span>)</span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Select corresponding variables from imputed dataset</span></span>
+<span id="cb79-5"><a href="#cb79-5" aria-hidden="true" tabindex="-1"></a>XX <span class="ot">&lt;-</span> imp_selected <span class="sc">|&gt;</span> </span>
+<span id="cb79-6"><a href="#cb79-6" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="fu">all_of</span>(indicator_names))</span>
+<span id="cb79-7"><a href="#cb79-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-8"><a href="#cb79-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to matrix for modeling</span></span>
+<span id="cb79-9"><a href="#cb79-9" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(XX)</span>
+<span id="cb79-10"><a href="#cb79-10" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> df<span class="sc">$</span>death_risk  <span class="co"># Outcome variable</span></span>
+<span id="cb79-11"><a href="#cb79-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-12"><a href="#cb79-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Ensure death_risk is a binary factor</span></span>
+<span id="cb79-13"><a href="#cb79-13" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>death_risk <span class="ot">&lt;-</span> <span class="fu">factor</span>(df<span class="sc">$</span>death_risk)</span>
+<span id="cb79-14"><a href="#cb79-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-15"><a href="#cb79-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Merge imputed data with the criterion variable</span></span>
+<span id="cb79-16"><a href="#cb79-16" aria-hidden="true" tabindex="-1"></a>df_model <span class="ot">&lt;-</span> imp_selected <span class="sc">%&gt;%</span></span>
+<span id="cb79-17"><a href="#cb79-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">death_risk =</span> df<span class="sc">$</span>death_risk)</span>
+<span id="cb79-18"><a href="#cb79-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-19"><a href="#cb79-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Validate the factor levels</span></span>
+<span id="cb79-20"><a href="#cb79-20" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(<span class="fu">levels</span>(df_model<span class="sc">$</span>death_risk)) <span class="sc">!=</span> <span class="dv">2</span>) {</span>
+<span id="cb79-21"><a href="#cb79-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"Error: The death_risk variable must be binary."</span>)</span>
+<span id="cb79-22"><a href="#cb79-22" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb79-23"><a href="#cb79-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-24"><a href="#cb79-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Train-Test Split</span></span>
+<span id="cb79-25"><a href="#cb79-25" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)  <span class="co"># For reproducibility</span></span>
+<span id="cb79-26"><a href="#cb79-26" aria-hidden="true" tabindex="-1"></a>trainIndex <span class="ot">&lt;-</span> <span class="fu">createDataPartition</span>(df_model<span class="sc">$</span>death_risk, <span class="at">p =</span> <span class="fl">0.8</span>, <span class="at">list =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb79-27"><a href="#cb79-27" aria-hidden="true" tabindex="-1"></a>train_data <span class="ot">&lt;-</span> df_model[trainIndex, ]</span>
+<span id="cb79-28"><a href="#cb79-28" aria-hidden="true" tabindex="-1"></a>test_data <span class="ot">&lt;-</span> df_model[<span class="sc">-</span>trainIndex, ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit Logistic Regression Model</span></span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>logit_model <span class="ot">&lt;-</span> <span class="fu">glm</span>(death_risk <span class="sc">~</span> ., <span class="at">data =</span> train_data, <span class="at">family =</span> binomial)</span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Predict probabilities on test set</span></span>
+<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a>pred_probs <span class="ot">&lt;-</span> <span class="fu">predict</span>(logit_model, test_data, <span class="at">type =</span> <span class="st">"response"</span>)</span>
+<span id="cb80-6"><a href="#cb80-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-7"><a href="#cb80-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert probabilities to class labels using dynamic factor levels</span></span>
+<span id="cb80-8"><a href="#cb80-8" aria-hidden="true" tabindex="-1"></a>threshold <span class="ot">&lt;-</span> <span class="fl">0.5</span></span>
+<span id="cb80-9"><a href="#cb80-9" aria-hidden="true" tabindex="-1"></a>pred_classes <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">ifelse</span>(pred_probs <span class="sc">&gt;</span> threshold, <span class="fu">levels</span>(df<span class="sc">$</span>death_risk)[<span class="dv">2</span>], <span class="fu">levels</span>(df<span class="sc">$</span>death_risk)[<span class="dv">1</span>]), </span>
+<span id="cb80-10"><a href="#cb80-10" aria-hidden="true" tabindex="-1"></a>                       <span class="at">levels =</span> <span class="fu">levels</span>(df<span class="sc">$</span>death_risk))</span>
+<span id="cb80-11"><a href="#cb80-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-12"><a href="#cb80-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute classification accuracy</span></span>
+<span id="cb80-13"><a href="#cb80-13" aria-hidden="true" tabindex="-1"></a>accuracy <span class="ot">&lt;-</span> <span class="fu">mean</span>(pred_classes <span class="sc">==</span> test_data<span class="sc">$</span>death_risk, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb80-14"><a href="#cb80-14" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Classification Accuracy:"</span>, <span class="fu">round</span>(accuracy, <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Classification Accuracy: 0.622 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute AUC (Area Under the Curve)</span></span>
+<span id="cb82-2"><a href="#cb82-2" aria-hidden="true" tabindex="-1"></a>roc_curve <span class="ot">&lt;-</span> <span class="fu">roc</span>(test_data<span class="sc">$</span>death_risk, pred_probs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Setting levels: control = 0, case = 1</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Setting direction: controls &lt; cases</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a>auc_value <span class="ot">&lt;-</span> <span class="fu">auc</span>(roc_curve)</span>
+<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"AUC:"</span>, <span class="fu">round</span>(auc_value, <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>AUC: 0.713 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb87"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Permutation Test: Evaluating Accuracy Against Chance Level</span></span>
+<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a>null_accuracies <span class="ot">&lt;-</span> <span class="fu">replicate</span>(<span class="dv">1000</span>, {</span>
+<span id="cb87-4"><a href="#cb87-4" aria-hidden="true" tabindex="-1"></a>  shuffled_risk <span class="ot">&lt;-</span> <span class="fu">sample</span>(train_data<span class="sc">$</span>death_risk)  <span class="co"># Shuffle class labels</span></span>
+<span id="cb87-5"><a href="#cb87-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb87-6"><a href="#cb87-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Fit model on shuffled labels</span></span>
+<span id="cb87-7"><a href="#cb87-7" aria-hidden="true" tabindex="-1"></a>  null_model <span class="ot">&lt;-</span> <span class="fu">glm</span>(shuffled_risk <span class="sc">~</span> ., <span class="at">data =</span> train_data, <span class="at">family =</span> binomial)</span>
+<span id="cb87-8"><a href="#cb87-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb87-9"><a href="#cb87-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Predict using null model</span></span>
+<span id="cb87-10"><a href="#cb87-10" aria-hidden="true" tabindex="-1"></a>  null_preds <span class="ot">&lt;-</span> <span class="fu">predict</span>(null_model, test_data, <span class="at">type =</span> <span class="st">"response"</span>)</span>
+<span id="cb87-11"><a href="#cb87-11" aria-hidden="true" tabindex="-1"></a>  null_classes <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">ifelse</span>(null_preds <span class="sc">&gt;</span> threshold, <span class="fu">levels</span>(df<span class="sc">$</span>death_risk)[<span class="dv">2</span>], <span class="fu">levels</span>(df<span class="sc">$</span>death_risk)[<span class="dv">1</span>]), </span>
+<span id="cb87-12"><a href="#cb87-12" aria-hidden="true" tabindex="-1"></a>                         <span class="at">levels =</span> <span class="fu">levels</span>(df<span class="sc">$</span>death_risk))</span>
+<span id="cb87-13"><a href="#cb87-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb87-14"><a href="#cb87-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mean</span>(null_classes <span class="sc">==</span> test_data<span class="sc">$</span>death_risk, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)  <span class="co"># Compute accuracy on actual test labels</span></span>
+<span id="cb87-15"><a href="#cb87-15" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb87-16"><a href="#cb87-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb87-17"><a href="#cb87-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute p-value: Proportion of null models performing as well as or better than the real model</span></span>
+<span id="cb87-18"><a href="#cb87-18" aria-hidden="true" tabindex="-1"></a>p_value <span class="ot">&lt;-</span> <span class="fu">mean</span>(null_accuracies <span class="sc">&gt;=</span> accuracy)</span>
+<span id="cb87-19"><a href="#cb87-19" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"P-value for classification above chance:"</span>, <span class="fu">round</span>(p_value, <span class="dv">4</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>P-value for classification above chance: 0.123 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb89"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot ROC Curve</span></span>
+<span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(roc_curve, <span class="at">col =</span> <span class="st">"blue"</span>, <span class="at">main =</span> <span class="st">"ROC Curve"</span>)</span>
+<span id="cb89-3"><a href="#cb89-3" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">a =</span> <span class="dv">0</span>, <span class="at">b =</span> <span class="dv">1</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"red"</span>)  <span class="co"># Reference line for random classification</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="item_selection_files/figure-html/unnamed-chunk-38-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="interpreting-the-results" class="level3">
+<h3 class="anchored" data-anchor-id="interpreting-the-results">Interpreting the Results</h3>
+<p><strong>Classification Accuracy:</strong></p>
+<p>Measures the percentage of correct classifications in the test set. If accuracy &gt; 0.70, the model has reasonably good predictive power.</p>
+<p><strong>AUC (Area Under the Curve):</strong></p>
+<p>AUC = 0.5: Model performs at chance level (random guessing). AUC &gt; 0.7: Good discrimination between positive/negative cases. AUC ≈ 1: Excellent classification performance.</p>
+<p><strong>Permutation Test (p-value):</strong></p>
+<p>Tests whether the classifier performs significantly better than chance. If p &lt; 0.05: The model significantly outperforms random classification. If p ≈ 0.5: The model is not better than random guessing.</p>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
